@@ -33,6 +33,242 @@ struct GDPoint //geometry data
 	double x;
 	double y;
 };
+typedef struct
+{
+	double X, Y, Z;
+}CCoordinate;
+
+class CGeometry
+{
+public:
+	enum GeometryType {
+		POINT,
+		LINE,
+		POLYGON,
+		UNKNOWN
+	};
+private:
+	GeometryType m_Type;
+	int m_NumOfCoordinates;
+	std::vector<CCoordinate> v_Coordinates;
+	bool ReadPointCoordinate(string s);
+	bool ReadLineStringCoordinates(string s);
+	bool ReadPolygonCoordinates(string s);
+
+public:
+	CGeometry(string s);
+	~CGeometry(void);
+
+	GeometryType GetGeometryType(void);
+	std::vector<CCoordinate> GetCoordinateList(void);
+	int GetNumberOfCoordinates(void);
+};
+
+CGeometry::CGeometry(string s)
+{
+	m_NumOfCoordinates = 0;
+
+	string tmp;
+	if (s.find("POINT") != std::string::npos)
+	{
+		tmp = s.substr(s.find_first_not_of(' '));
+		size_t start_idx = tmp.find_first_of('(');
+		size_t end_idx = tmp.find_first_of(')');
+
+		if (start_idx == std::string::npos || end_idx == std::string::npos)
+			return;
+
+		string type_str = tmp.substr(0, start_idx);
+		type_str.erase(type_str.find_last_not_of(" ") + 1);		// works for 'LINESTRING (....' and 'LINESTRING(....'
+
+		string start_tag = "(";
+		string end_tag = ")";
+
+		start_idx = tmp.find(start_tag);
+		start_idx += start_tag.length();
+		end_idx = tmp.find(end_tag);
+
+		tmp = tmp.substr(start_idx, end_idx - start_idx);
+
+
+		m_Type = POINT;
+	}
+	else if (s.find("LINESTRING") != std::string::npos)
+	{
+		tmp = s.substr(s.find_first_not_of(' '));
+		size_t start_idx = tmp.find_first_of('(');
+		size_t end_idx = tmp.find_first_of(')');
+
+		if (start_idx == std::string::npos || end_idx == std::string::npos)
+			return;
+
+		string type_str = tmp.substr(0, start_idx);
+		type_str.erase(type_str.find_last_not_of(" ") + 1);		// works for 'LINESTRING (....' and 'LINESTRING(....'
+
+		string start_tag = "(";
+		string end_tag = ")";
+
+		start_idx = tmp.find(start_tag);
+		start_idx += start_tag.length();
+		end_idx = tmp.find(end_tag);
+
+		tmp = tmp.substr(start_idx, end_idx - start_idx);
+
+
+		m_Type = LINE;
+	}
+	else if (s.find("POLYGON") != std::string::npos)
+	{
+		tmp = s.substr(s.find_first_not_of(' '));
+		size_t start_idx = tmp.find('((');
+		size_t end_idx = tmp.find('))');
+
+		if (start_idx == std::string::npos || end_idx == std::string::npos)
+			return;
+
+		string type_str = tmp.substr(0, start_idx);
+		type_str.erase(type_str.find_last_not_of(" ") + 1);		// works for 'LINESTRING (....' and 'LINESTRING(....'
+
+		string start_tag = "((";
+		string end_tag = "))";
+
+		start_idx = tmp.find(start_tag);
+		start_idx += start_tag.length();
+		end_idx = tmp.find(end_tag);
+
+		tmp = tmp.substr(start_idx, end_idx - start_idx);
+
+
+		m_Type = POLYGON;
+	}
+	else
+	{
+		m_Type = UNKNOWN;
+	}
+
+	switch (m_Type)
+	{
+	case POINT:
+		ReadPointCoordinate(tmp);
+		break;
+	case LINE:
+		ReadLineStringCoordinates(tmp);
+		break;
+	case POLYGON:
+		ReadPolygonCoordinates(tmp);
+		break;
+	default:
+		break;
+	}
+
+}
+
+CGeometry::~CGeometry(void)
+{
+}
+
+CGeometry::GeometryType CGeometry::GetGeometryType(void)
+{
+	return m_Type;
+}
+
+int CGeometry::GetNumberOfCoordinates(void)
+{
+	return m_NumOfCoordinates;
+}
+
+std::vector<CCoordinate> CGeometry::GetCoordinateList(void)
+{
+	return v_Coordinates;
+}
+
+bool CGeometry::ReadLineStringCoordinates(string s)
+{
+	istringstream ss(s);
+	string sub_str;
+
+	if (std::string::npos == s.find_first_of("0123456789"))
+	{
+		// "digit not found!, empty string//
+		return false;
+	}
+
+	while (std::getline(ss, sub_str, ','))
+	{
+		sub_str = sub_str.substr(sub_str.find_first_not_of(' '));
+
+		CCoordinate coordinate;
+		istringstream sub_ss(sub_str);
+		string tmp;
+
+		std::getline(sub_ss, tmp, ' ');
+		istringstream x_ss(tmp);
+		x_ss >> coordinate.X;
+
+		std::getline(sub_ss, tmp, ' ');
+		istringstream y_ss(tmp);
+		y_ss >> coordinate.Y;
+
+		v_Coordinates.push_back(coordinate);
+		m_NumOfCoordinates += 1;
+	}
+	return true;
+}
+
+bool CGeometry::ReadPolygonCoordinates(string s)
+{
+	istringstream ss(s);
+	string sub_str;
+	if (std::string::npos == s.find_first_of("0123456789"))
+	{
+		// "digit not found!, empty string//
+		return false;
+	}
+
+	while (std::getline(ss, sub_str, ','))
+	{
+		sub_str = sub_str.substr(sub_str.find_first_not_of(' '));
+
+		CCoordinate coordinate;
+		istringstream sub_ss(sub_str);
+		string tmp;
+
+		std::getline(sub_ss, tmp, ' ');
+		istringstream x_ss(tmp);
+		x_ss >> coordinate.X;
+
+
+		std::getline(sub_ss, tmp, ' ');
+		istringstream y_ss(tmp);
+		y_ss >> coordinate.Y;
+
+		v_Coordinates.push_back(coordinate);
+		m_NumOfCoordinates += 1;
+	}
+	return true;
+}
+bool CGeometry::ReadPointCoordinate(string s)
+{
+	CCoordinate coordinate;
+	istringstream ss(s);
+
+	string sub_str;
+	std::getline(ss, sub_str, ' ');
+	istringstream x_ss(sub_str);
+
+	std::getline(ss, sub_str, ' ');
+	istringstream y_ss(sub_str);
+	x_ss >> coordinate.X;
+	y_ss >> coordinate.Y;
+	coordinate.Z = 0.0;
+
+	v_Coordinates.push_back(coordinate);
+	m_NumOfCoordinates = 1;
+
+	return true;
+}
+
+
 
 class CNode
 {
@@ -41,6 +277,8 @@ public:
 	int node_id;      //external node number
 	string name;
 	std::vector<int> m_outgoing_link_seq_no_vector;
+
+	std::map<int,int> m_outgoing_link_seq_no_map;
 	GDPoint pt;
 };
 
@@ -52,6 +290,9 @@ public:
 	int link_id;
 	string name;
 	string geometry;
+
+	std::vector<GDPoint> m_PointVector;
+
 	int from_node_id;
 	int to_node_id;
 
@@ -63,7 +304,6 @@ public:
 
 std::vector<CNode> g_node_vector;
 std::vector<CLink> g_link_vector;
-
 
 double g_GetPoint2Point_Distance(GDPoint p1, GDPoint p2)
 {
@@ -884,12 +1124,12 @@ void g_ReadInputData()
 			if (parser_link.GetValueByFieldName("to_node_id", link.to_node_id) == false)
 				continue;
 
-			int allowed_uses = -1;
+			string allowed_uses;
 			parser_link.GetValueByFieldName("allowed_uses", allowed_uses, false);
 
 
-				if (allowed_uses != 1)  // not allowed, skip this link in map matching process 
-					continue;
+				//if (allowed_uses != 1)  // not allowed, skip this link in map matching process,  we have to comment out this line. to allow easy input for all mode. 
+							//	continue;  // if users need to select a specific network, they have to construct underlying network
 
 			if (g_internal_node_seq_no_map.find(link.from_node_id) == g_internal_node_seq_no_map.end())
 			{
@@ -902,17 +1142,38 @@ void g_ReadInputData()
 				continue;
 			}
 
-			string geometry;
-			parser_link.GetValueByFieldName("geometry", geometry);
+			string geometry_str;
+			parser_link.GetValueByFieldName("geometry", geometry_str);
 
 
 			link.from_node_seq_no = g_internal_node_seq_no_map[link.from_node_id];
 			link.to_node_seq_no = g_internal_node_seq_no_map[link.to_node_id];
-			link.geometry = geometry;
+			link.geometry = geometry_str;
+
+			// overwrite when the field "geometry" exists
+			CGeometry geometry(geometry_str);
+			std::vector<CCoordinate> CoordinateVector;
+			CoordinateVector = geometry.GetCoordinateList();
+			if (CoordinateVector.size() >= 2)
+			{
+				for (int l = 0; l < CoordinateVector.size(); l++)
+				{
+
+					GDPoint Point;
+					Point.x = CoordinateVector[l].X;
+					Point.y = CoordinateVector[l].Y;
+					//				GPSPoint.time_str = time_stamp;
+
+					link.m_PointVector.push_back(Point);
+
+				}
+			}
+
 			link.link_seq_no = g_number_of_links++;
 
 			g_internal_link_no_map[link.link_id] = link.link_seq_no;
 			g_node_vector[link.from_node_seq_no].m_outgoing_link_seq_no_vector.push_back(link.link_seq_no);
+			g_node_vector[link.from_node_seq_no].m_outgoing_link_seq_no_map[link.to_node_seq_no] = link.link_seq_no;
 			g_link_vector.push_back(link);
 
 			if (g_number_of_links % 1000 == 0)
@@ -930,6 +1191,70 @@ void g_ReadInputData()
 
 	CCSVParser gps_parser;
 	int gps_point_count = 0;
+	if (gps_parser.OpenCSVFile("input_agent.csv", true))
+	{
+		double x, y;
+		string time_stamp;
+		int time_in_second;
+		while (gps_parser.ReadRecord())
+		{
+			string agent_id;
+			if (gps_parser.GetValueByFieldName("agent_id", agent_id) == false)
+				continue;
+
+			if (g_internal_agent_no_map.find(agent_id) == g_internal_agent_no_map.end())
+			{
+
+				g_internal_agent_no_map[agent_id] = g_internal_agent_no_map.size();  // assign the internal agent no as the current size of the map.
+				CAgent agent;
+				agent.agent_id = agent_id;
+				agent.agent_no = g_agent_vector.size();
+				g_agent_vector.push_back(agent);
+			}
+
+			int o_zone_id;
+			int d_zone_id;
+
+			gps_parser.GetValueByFieldName("o_zone_id", o_zone_id);
+			gps_parser.GetValueByFieldName("d_zone_id", d_zone_id);
+
+			g_agent_vector[g_internal_agent_no_map[agent_id]].origin_zone_id = o_zone_id;
+			g_agent_vector[g_internal_agent_no_map[agent_id]].destination_zone_id = d_zone_id;
+
+			string geometry_str;
+			gps_parser.GetValueByFieldName("geometry", geometry_str);
+
+			// overwrite when the field "geometry" exists
+			CGeometry geometry(geometry_str);
+			std::vector<CCoordinate> CoordinateVector;
+			CoordinateVector = geometry.GetCoordinateList();
+			if (CoordinateVector.size() >= 2)
+			{
+				for (int l = 0; l < CoordinateVector.size(); l++)
+				{
+			
+				CGPSPoint GPSPoint;
+				GPSPoint.pt.x = CoordinateVector[l].X;
+				GPSPoint.pt.y = CoordinateVector[l].Y;
+//				GPSPoint.time_str = time_stamp;
+				
+				g_agent_vector[g_internal_agent_no_map[agent_id]].m_GPSPointVector.push_back(GPSPoint);
+				gps_point_count++;
+				}
+			}
+		}
+
+		cout << "number of agents = " << g_agent_vector.size() << endl;
+		cout << "number of GPS points = " << gps_point_count << endl;
+
+		gps_parser.CloseCSVFile();
+
+		return; 
+
+	}
+
+	// try trace file
+	gps_point_count = 0;
 	if (gps_parser.OpenCSVFile("trace.csv", true))
 	{
 		double x, y;
@@ -973,7 +1298,7 @@ void g_ReadInputData()
 	}
 	else
 	{
-		cout << "Cannot open file trace.csv" << endl;
+		cout << "Cannot open file input_agent.csv or trace.csv" << endl;
 		g_Program_stop();
 	}
 
@@ -1045,9 +1370,15 @@ void g_OutputAgentCSVFile()
 			{
 				fprintf(g_pFileAgent, "\"LINESTRING (");
 
-				for (int i = 0; i < p_agent->m_node_size; i++)
+				for (int i = 0; i < p_agent->m_node_size-1; i++)
 				{
-					fprintf(g_pFileAgent, "%f %f,", g_node_vector[p_agent->path_node_vector[i]].pt.x, g_node_vector[p_agent->path_node_vector[i]].pt.y);
+					int link_no = g_node_vector[p_agent->path_node_vector[i]].m_outgoing_link_seq_no_map[p_agent->path_node_vector[i+1]];
+
+					for(int gl = 0; gl < g_link_vector[link_no].m_PointVector.size()-1; gl++)  //-1 to skip the last GD point
+					{ 
+					fprintf(g_pFileAgent, "%f %f,", g_link_vector[link_no].m_PointVector[gl].x, 
+													g_link_vector[link_no].m_PointVector[gl].y);
+					}
 				}
 				fprintf(g_pFileAgent, ")\"");
 

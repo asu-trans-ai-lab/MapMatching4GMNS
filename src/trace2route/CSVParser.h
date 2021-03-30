@@ -289,8 +289,8 @@ public:
 				return false;
 			}
 
-			if (NonnegativeFlag && converted_value<0)
-				converted_value = 0;
+			//if (NonnegativeFlag && converted_value<0)
+			//	converted_value = 0;
 
 			value = converted_value;
 			return true;
