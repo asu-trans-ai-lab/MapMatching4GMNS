@@ -1,6 +1,6 @@
 # Trace2Route
 
-**MapMatching Program: Trace2route**
+**MapMatching Program: MapMatchingLite**
 
 Please send your comments to <xzhou74@asu.edu> if you have any suggestions and
 questions.
