@@ -22,11 +22,11 @@ trace.
 
 1.  **Data flow**
 
-| **Input files**              | **Output files** |
-|------------------------------|------------------|
-| node.csv                     | agent.csv        |
-| link.csv                     |                  |
-| input_agent.csv or trace.csv |                  |
+| **Input files** | **Output files** |
+|-----------------|------------------|
+| node.csv        | agent.csv        |
+| link.csv        |                  |
+| input_agent.csv |                  |
 
 2.  **Input file description**
 
@@ -40,16 +40,15 @@ trace.
 
 ![](media/1f78e34e3e8ff4091a1997e44825a503.png)
 
-**Input trace file, option 1, input_agent.csv** can be generated from package
-grid2demand.
+**Input trace file** as input_agent.csv. The geometry field describes longitude
+and latitude of each GPS point along the trace of each agent. In the following
+example there are exactly 2 GPS points as the origin and destination locations,
+while other examples can include more than 2 GPS points along the trace. The
+geometry field follows the WKT format.
 
-![](media/9ece03dedb0310001bdf97a4c4705f8e.png)
+https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
 
-**Input trace file, option 2, trace.csv**, describes trajectory location points
-of each agent. The timestamp format used here is hhmm:ss. In the future, we can
-also use DTALite
-
-![](media/604d110f6a0bdf2a7b1b552b1172e194.png)
+![](media/308de5075f12b12dab40c3309182b047.png)
 
 1.  **Output file description**
 
