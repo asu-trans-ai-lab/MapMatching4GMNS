@@ -1,9 +1,24 @@
-# Trace2Route
-
-**MapMatching Program: MapMatchingLite**
+# Matching2Route
 
 Please send your comments to <xzhou74@asu.edu> if you have any suggestions and
 questions.
+
+Based on input network and given GPS trajectory data, the map-matching program
+of Matching2Route aims to find most likely route in terms of node sequence in
+the underlying network, with the following data flow chart.
+
+![](media/5d46d46e6d66cfe932399f796dcd713c.png)
+
+The 2D grid system aims to speed up the indexing of GSP points to the network.
+For example, a 10x10 grid for a network of 100 K nodes could lead to 1K nodes in
+each cell. We first identify all cells traveled by a GPS trace, so only a small
+subset of the network will be loaded in the resulting shortest path algorithm.
+
+The link cost estimation step calculates a generalized weight/cost for each link
+in the cell, that is, the distance from nearly GPS points to a link inside the
+cell. The likely path finding algorithm selects the least cost path with the
+smallest generalized cumulative cost from the beginning to the end of the GPS
+trace.
 
 1.  **Data flow**
 
