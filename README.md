@@ -1,11 +1,11 @@
-# Matching2Path
+# Matching2Route
 
 Please send your comments to <xzhou74@asu.edu> if you have any suggestions and
 questions.
 
 Based on input network and given GPS trajectory data, the map-matching program
-of Matching2Path aims to find most likely route in terms of node sequence in the
-underlying network, with the following data flow chart.
+of Matching2Route aims to find most likely route in terms of node sequence in
+the underlying network, with the following data flow chart.
 
 ![](media/5d46d46e6d66cfe932399f796dcd713c.png)
 
