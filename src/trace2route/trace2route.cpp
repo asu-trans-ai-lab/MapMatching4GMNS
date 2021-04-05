@@ -14,6 +14,7 @@ using namespace std;
 
 #define _MAX_LABEL_COST 999999
 #define _MAX_GRID_SIZE 100
+#define _PI 3.1415
 
 int g_max_number_of_threads = 4;
 int g_number_of_nodes = 0;
@@ -27,7 +28,7 @@ std::map<string, int> g_internal_agent_no_map;
 
 
 extern void g_Program_stop();
-
+extern void g_OutputInputAgentCSVFile();
 struct GDPoint //geometry data
 {
 	double x;
@@ -340,11 +341,51 @@ double g_GetPoint2LineDistance(GDPoint pt, GDPoint FromPt, GDPoint ToPt, double 
 		return distance_1 / max(0.000001, UnitMile);
 }
 
+float g_Find_P2P_Angle(GDPoint p1, GDPoint p2)
+{
+	float delta_x = p2.x - p1.x;
+	float delta_y = p2.y - p1.y;
+
+	if (fabs(delta_x) < 0.00001)
+		delta_x = 0;
+
+	if (fabs(delta_y) < 0.00001)
+		delta_y = 0;
+
+	int angle = atan2(delta_y, delta_x) * 180 / _PI + 0.5;
+	// angle = 90 - angle;
+
+	while (angle < 0)
+		angle += 360;
+
+	while (angle > 360)
+		angle -= 360;
+
+	return angle;
+
+}
+double g_Find_PPP_RelativeAngle(GDPoint p1, GDPoint p2, GDPoint p3, GDPoint p4)
+{
+	int relative_angle;
+
+	int angle1 = g_Find_P2P_Angle(p1, p2);
+	int angle2 = g_Find_P2P_Angle(p3, p4);
+	relative_angle = angle2 - angle1;
+
+	while (relative_angle > 180)
+		relative_angle -= 360;
+
+	while (relative_angle < -180)
+		relative_angle += 360;
+
+	return relative_angle;
+}
 //ill conditioning detection
 bool g_ill_conditioning_detection(float link_distance, float GPS_segment_distance)
 {
+	double cutoff_ratio = 3; 
 	float ratio = link_distance / max(0.00000001, GPS_segment_distance);
-	if (0.2<ratio && ratio < 5.0)
+	if ( (1.0/ cutoff_ratio) <ratio && ratio < cutoff_ratio)
 		return false;  //this indicates: good_conditioning, so ill_conditioning = false
 	else
 		return true;
@@ -387,6 +428,8 @@ public:
 	{
 		matching_link_no = -1;
 		avg_GPS_segment_distance = 0;
+		first_segment_distance = 0;
+		last_segment_distance = 0;
 	}
 
 	string agent_id;
@@ -407,6 +450,9 @@ public:
 	std::vector<CGPSPoint> m_GPSPointVector;
 
 	float avg_GPS_segment_distance;
+	float first_segment_distance;
+	float last_segment_distance;
+
 
 	int m_node_size;
 	int* path_node_vector; // final node sequqence for the path
@@ -530,6 +576,13 @@ public:
 
 	}
 
+	bool bInsideGrid(GDPoint pt)
+	{
+		if(pt.x < m_left || pt.x > m_right || pt.y < m_bottom || pt.y > m_top)
+			return false; 
+		else
+			return true;
+	}
 
 	void AddGPSPointsIntoGridSystem(int agent_no)
 	{  // for every agent 
@@ -550,16 +603,33 @@ public:
 		// put GPS points into grid cell
 
 		// calculate avg distance
-		float total_GPS_distance = 0;
+		double total_GPS_distance = 0;
 		int g;
+
+		if(g_agent_vector[agent_no].m_GPSPointVector.size()>=2)
+		{
 		for (g = 0; g < g_agent_vector[agent_no].m_GPSPointVector.size()-1; g++)  // for each GPS point
 		{
-			total_GPS_distance += g_GetPoint2Point_Distance(g_agent_vector[agent_no].m_GPSPointVector[g].pt, g_agent_vector[agent_no].m_GPSPointVector[g+1].pt);
+			double segment_distance;
+			segment_distance = g_GetPoint2Point_Distance(g_agent_vector[agent_no].m_GPSPointVector[g].pt, g_agent_vector[agent_no].m_GPSPointVector[g+1].pt);
 
+			 total_GPS_distance += segment_distance;
+			if (g == 0)
+			{
+				g_agent_vector[agent_no].first_segment_distance = segment_distance;
+			}
+
+			if (g == g_agent_vector[agent_no].m_GPSPointVector.size() - 2)
+			{
+				g_agent_vector[agent_no].last_segment_distance = segment_distance;
+			}
+
+		}
 		}
 
 		g_agent_vector[agent_no].avg_GPS_segment_distance = total_GPS_distance / max(1, g_agent_vector[agent_no].m_GPSPointVector.size() - 1);
 
+		int g_indside_index = -1;
 		for (g = 0; g < g_agent_vector[agent_no].m_GPSPointVector.size(); g++)  // for each GPS point
 		{ // x_key and y_key are relative index of grid
 			int x_key = (g_agent_vector[agent_no].m_GPSPointVector[g].pt.x - m_left) / m_GridXStep;
@@ -572,30 +642,50 @@ public:
 			y_key = max(0, y_key);
 			y_key = min(g_grid_size - 1, y_key);
 
-			m_GridMatrix[x_key][y_key].m_GPSPointVector.push_back(g_agent_vector[agent_no].m_GPSPointVector[g]);
-
-
-			if (g == 0)  // mark starting GPS point to find the o_node for shortest path
+			if (bInsideGrid(g_agent_vector[agent_no].m_GPSPointVector[g].pt) == true)
 			{
-
-				m_GridMatrix[x_key][y_key].origin_cell_flag = true;
-				m_GridMatrix[x_key][y_key].m_o_boundary_point[0] = g_agent_vector[agent_no].m_GPSPointVector[g].pt;
-				
-				if(g_agent_vector[agent_no].m_GPSPointVector.size()>=2)
+				if (g_indside_index == -1)
+					g_indside_index = 0; // initialize
+				else
 				{
-				m_GridMatrix[x_key][y_key].m_o_boundary_point[1] = g_agent_vector[agent_no].m_GPSPointVector[g+1].pt;
+					g_indside_index++;
 				}
 			}
-			else if (g == g_agent_vector[agent_no].m_GPSPointVector.size() - 1 && (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2))  //ending GPS point to find the d_node 
-			{
-
-				m_GridMatrix[x_key][y_key].destination_cell_flag = true;
-				m_GridMatrix[x_key][y_key].m_d_boundary_point[0] = g_agent_vector[agent_no].m_GPSPointVector[g - 1].pt;
-				m_GridMatrix[x_key][y_key].m_d_boundary_point[1] = g_agent_vector[agent_no].m_GPSPointVector[g].pt;
-
+			else
+			{  // outside
+				if (g_indside_index >= 0)  // has been inside
+				{
+					g_indside_index = -100; // boundary before outside
+				}
 			}
 
+			if (bInsideGrid(g_agent_vector[agent_no].m_GPSPointVector[g].pt) == true)
+			{
 
+				m_GridMatrix[x_key][y_key].m_GPSPointVector.push_back(g_agent_vector[agent_no].m_GPSPointVector[g]);
+
+					if (g_indside_index == 0)  // mark starting GPS point to find the o_node for shortest path
+					{
+
+						m_GridMatrix[x_key][y_key].origin_cell_flag = true;
+							m_GridMatrix[x_key][y_key].m_o_boundary_point[0] = g_agent_vector[agent_no].m_GPSPointVector[g].pt;
+
+							if (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2)
+							{
+								m_GridMatrix[x_key][y_key].m_o_boundary_point[1] = g_agent_vector[agent_no].m_GPSPointVector[g + 1].pt;
+							}
+					}
+					else if ((g_indside_index == -100 /*boundary before outside*/ || (g == g_agent_vector[agent_no].m_GPSPointVector.size() - 1 /*last node*/)) && (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2))  //ending GPS point to find the d_node 
+					{
+
+						m_GridMatrix[x_key][y_key].destination_cell_flag = true;
+						m_GridMatrix[x_key][y_key].m_d_boundary_point[0] = g_agent_vector[agent_no].m_GPSPointVector[g - 1].pt;
+						m_GridMatrix[x_key][y_key].m_d_boundary_point[1] = g_agent_vector[agent_no].m_GPSPointVector[g].pt;
+
+					}
+
+			}
+		
 		}
 
 		// for each grid matrix cell
@@ -655,14 +745,19 @@ public:
 
 						double distance = _MAX_LABEL_COST;
 	
+						if (g_link_vector[l].from_node_id == 9945 && g_link_vector[l].to_node_id == 115)
+						{
+							TRACE("");
+						}
+						 
 						//ill conditioning detection
 
-						if(g_ill_conditioning_detection(g_link_vector[l].distance, g_agent_vector[agent_no].avg_GPS_segment_distance)==false)
+						if(g_ill_conditioning_detection(g_link_vector[l].distance, g_agent_vector[agent_no].first_segment_distance)==false)
 						{ // case of good conditioning
 						double distance_from = g_GetPoint2LineDistance(m_GridMatrix[x_i][y_i].m_o_boundary_point[0], g_node_vector[g_link_vector[l].from_node_seq_no].pt, g_node_vector[g_link_vector[l].to_node_seq_no].pt,
 								1, false);
 
-							double distance_to = 0;
+						double distance_to = 0;
 
 							if (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2)
 							{
@@ -686,9 +781,32 @@ public:
 
 							distance_from_p2p = g_GetPoint2Point_Distance(m_GridMatrix[x_i][y_i].m_o_boundary_point[0], g_node_vector[g_link_vector[l].from_node_seq_no].pt);
 							distance_to_p2p = g_GetPoint2Point_Distance(m_GridMatrix[x_i][y_i].m_o_boundary_point[0], g_node_vector[g_link_vector[l].to_node_seq_no].pt);
+
+			
+
 							distance = min(distance_from_p2p, distance_to_p2p);
+
+						// consider the minimal distance of any point, and avg distance of cross-section distance 
 						}
-						
+
+						// we check this relative angle condition for both ill and good conditions, 
+						if (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2)
+						{
+							double relative_angle = fabs(g_Find_PPP_RelativeAngle(
+								m_GridMatrix[x_i][y_i].m_o_boundary_point[0],
+								m_GridMatrix[x_i][y_i].m_o_boundary_point[1],
+								g_node_vector[g_link_vector[l].from_node_seq_no].pt,
+								g_node_vector[g_link_vector[l].to_node_seq_no].pt));
+
+							if (relative_angle > 45)
+							{
+								// reset for opposite direction
+								distance = _MAX_LABEL_COST;
+							}
+
+						}
+
+					
 						int i_trace = 0;
 
 						if (distance < min_distance_to_boundary_point)
@@ -697,7 +815,7 @@ public:
 							min_distance_to_boundary_point = distance;
 							origin_node_no = g_link_vector[l].from_node_seq_no;
 							g_agent_vector[agent_no].matching_link_no = l;
-
+							
 							TRACE("%d -> %d, %f \n", g_link_vector[l].from_node_id, g_link_vector[l].to_node_id, distance);
 
 						}
@@ -720,7 +838,7 @@ public:
 
 						double distance = _MAX_LABEL_COST;
 
-						if (g_ill_conditioning_detection(g_link_vector[l].distance, g_agent_vector[agent_no].avg_GPS_segment_distance) == false)
+						if (g_ill_conditioning_detection(g_link_vector[l].distance, g_agent_vector[agent_no].last_segment_distance) == false)
 						{  // case of good conditioning
 							double distance_from = g_GetPoint2LineDistance(m_GridMatrix[x_i][y_i].m_d_boundary_point[0],
 								g_node_vector[g_link_vector[l].from_node_seq_no].pt, g_node_vector[g_link_vector[l].to_node_seq_no].pt,
@@ -749,6 +867,23 @@ public:
 							//[1] ending point of GPS point segment
 							distance_to_p2p = g_GetPoint2Point_Distance(m_GridMatrix[x_i][y_i].m_d_boundary_point[1], g_node_vector[g_link_vector[l].to_node_seq_no].pt);
 							distance = min(distance_from_p2p, distance_to_p2p);
+
+						}
+
+						// we check this relative angle condition for both ill and good conditions, 
+						if (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2)
+						{
+							double relative_angle = fabs(g_Find_PPP_RelativeAngle(
+								m_GridMatrix[x_i][y_i].m_d_boundary_point[0],
+								m_GridMatrix[x_i][y_i].m_d_boundary_point[1],
+								g_node_vector[g_link_vector[l].from_node_seq_no].pt,
+								g_node_vector[g_link_vector[l].to_node_seq_no].pt));
+
+							if (relative_angle > 45)
+							{
+								// reset for opposite direction
+								distance = _MAX_LABEL_COST;
+							}
 
 						}
 
@@ -1285,10 +1420,10 @@ void g_ReadInputData()
 			if (g_internal_agent_no_map.find(agent_id) == g_internal_agent_no_map.end())
 			{
 
-				g_internal_agent_no_map[agent_id] = g_internal_agent_no_map.size();  // assign the internal agent no as the current size of the map.
 				CAgent agent;
 				agent.agent_id = agent_id;
 				agent.agent_no = g_agent_vector.size();
+				g_internal_agent_no_map[agent_id] = agent.agent_no;  // assign the internal agent no as the current size of the map.
 				g_agent_vector.push_back(agent);
 			}
 
@@ -1333,8 +1468,57 @@ void g_ReadInputData()
 
 	}else
 	{
-		cout << "Cannot open file input_agent.csv or trace.csv" << endl;
-		g_Program_stop();
+
+		cout << "Cannot open file input_agent.csv" << endl;
+
+		// convert trace file to input_agent.csv
+		gps_point_count = 0;
+		if (gps_parser.OpenCSVFile("trace.csv", true))
+		{
+			double x, y;
+			string time_stamp;
+			int time_in_second;
+			while (gps_parser.ReadRecord())
+			{
+				string agent_id;
+				if (gps_parser.GetValueByFieldName("agent_id", agent_id) == false)
+					continue;
+
+				if (g_internal_agent_no_map.find(agent_id) == g_internal_agent_no_map.end())
+				{
+
+					g_internal_agent_no_map[agent_id] = g_internal_agent_no_map.size();  // assign the internal agent no as the current size of the map.
+					CAgent agent;
+					agent.agent_id = agent_id;
+					agent.agent_no = g_agent_vector.size();
+					g_agent_vector.push_back(agent);
+				}
+
+				gps_parser.GetValueByFieldName("x_coord", x, false);
+				gps_parser.GetValueByFieldName("y_coord", y, false);
+				gps_parser.GetValueByFieldName("timestamp", time_stamp);
+				time_in_second = timestr2second(time_stamp);
+
+				CGPSPoint GPSPoint;
+				GPSPoint.pt.x = x;
+				GPSPoint.pt.y = y;
+				GPSPoint.time_str = time_stamp;
+				GPSPoint.time_in_second = time_in_second;
+				g_agent_vector[g_internal_agent_no_map[agent_id]].m_GPSPointVector.push_back(GPSPoint);
+				gps_point_count++;
+			}
+
+			// write input_agent file
+			gps_parser.CloseCSVFile();
+			g_OutputInputAgentCSVFile();
+
+		}
+		else
+		{
+			g_Program_stop();
+		}
+
+
 	}
 
 
@@ -1434,6 +1618,46 @@ void g_OutputAgentCSVFile()
 	}
 }
 
+void g_OutputInputAgentCSVFile()
+{
+	FILE* g_pFileAgent = NULL;
+	g_pFileAgent = fopen("input_agent.csv", "w");
+
+	if (g_pFileAgent == NULL)
+	{
+		cout << "File input_agent.csv cannot be opened." << endl;
+		g_Program_stop();
+	}
+	else
+	{
+		fprintf(g_pFileAgent, "agent_id,geometry\n");
+
+		for (int a = 0; a < g_agent_vector.size(); a++)
+		{
+			CAgent* p_agent = &(g_agent_vector[a]);
+
+			fprintf(g_pFileAgent, "%s,", p_agent->agent_id.c_str());
+
+			
+			if (p_agent->m_GPSPointVector.size() >= 2) 
+			{
+				fprintf(g_pFileAgent, "\"LINESTRING (");
+
+				for (int i = 0; i < p_agent->m_GPSPointVector.size(); i++)
+				{
+						fprintf(g_pFileAgent, "%f %f,", p_agent->m_GPSPointVector[i].pt.x , p_agent->m_GPSPointVector[i].pt.y);
+				}
+				fprintf(g_pFileAgent, ")\"");
+
+			}
+
+			fprintf(g_pFileAgent, "\n");
+		}
+
+		fclose(g_pFileAgent);
+	}
+}
+
 bool g_LikelyRouteFinding()
 {
 	int number_of_threads = g_number_of_CPU_threads();
@@ -1478,8 +1702,8 @@ int main(int argc, TCHAR* argv[], TCHAR* envp[])
 {
 	clock_t start_t, end_t, total_t;
 
-	start_t = clock();
 	g_ReadInputData();
+	start_t = clock();
 	g_LikelyRouteFinding();
 
 	end_t = clock();
