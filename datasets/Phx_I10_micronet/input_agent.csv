@@ -1,0 +1,2 @@
+agent_id,agent_type,o_node_id,d_node_id,o_osm_node_id,d_osm_node_id,o_zone_id,d_zone_id,geometry,departure_time
+37455,v,1982,1482,5689426834,3073027832,27,31,"LINESTRING(-112.1149153 33.4511114,-112.100973 33.4666368)",705
