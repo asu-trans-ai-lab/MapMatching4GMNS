@@ -7,6 +7,8 @@ Based on input network and given GPS trajectory data, the map-matching program
 of MapMatching4GMNS aims to find the most likely route in terms of node sequence
 in the underlying network, with the following data flow chart.
 
+Test Python Script: https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb 
+
 [GMNS: General Modeling Network
 Specification (GMNS) ](https://github.com/zephyr-data-specs/GMNS)
 
