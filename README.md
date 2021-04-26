@@ -7,10 +7,21 @@ Based on input network and given GPS trajectory data, the map-matching program
 of MapMatching4GMNS aims to find the most likely route in terms of node sequence
 in the underlying network, with the following data flow chart.
 
-Test Python Script: https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb 
+Test Python Script:
+https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb
 
-[GMNS: General Modeling Network
-Specification (GMNS) ](https://github.com/zephyr-data-specs/GMNS)
+[GMNS: General Modeling Network Specification (GMNS)
+](<https://github.com/zephyr-data-specs/GMNS>)
+
+**Data flow**
+
+|                              | **files**                 | **Source**                                                                           | **Visualization**                                                                                                 |
+|------------------------------|---------------------------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| GMNS network input           | node.csv, link.csv        | [Osm2gmns](https://osm2gmns.readthedocs.io/en/latest/)                               | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/)  |
+| Location sequence data input | Option 1: input_agent.csv | Demand generation model such as [Grid2demand](https://pypi.org/project/grid2demand/) | QGIS                                                                                                              |
+|                              | Option 2: Trace.csv       | Real world location data such as connected vehicle data                              | QGIS                                                                                                              |
+| Map-matched output           | C.agent.csv               |                                                                                      | QGIS                                                                                                              |
+| Link performance output      | Link_perforamnce.csv      |                                                                                      |                                                                                                                   |
 
 1.  **Read standard GMNS network files** node and link files
 
@@ -48,18 +59,10 @@ Specification (GMNS) ](https://github.com/zephyr-data-specs/GMNS)
 10. **Output link performance** with **estimated link travel time and delay**
     based on free-flow travel time of each link along the GPS matched routes
 
-11. **Data flow**
+**Input file description**
 
-| **Input files** | **Output files** |
-|-----------------|------------------|
-| node.csv        | agent.csv        |
-| link.csv        |                  |
-| input_agent.csv |                  |
-
-12. **Input file description**
-
-    **File node.csv** gives essential node information of the underlying
-    (subarea) network in GMNS format, including node_id, x_coord and y_coord.
+>   **File node.csv** gives essential node information of the underlying
+>   (subarea) network in GMNS format, including node_id, x_coord and y_coord.
 
 ![](media/22d8257ea35209b83eefefa4eec814c0.png)
 
@@ -89,33 +92,55 @@ https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
 
 ![](media/308de5075f12b12dab40c3309182b047.png)
 
-1.  **Output file description**
+**Output file description**
 
-    **File agent.csv** describes the most-likely path for each agent based on
-    input trajectories.
+>   **File agent.csv** describes the most-likely path for each agent based on
+>   input trajectories.
 
 ![](media/caec124ffd9a88d841b924a0dda3d3b7.png)
 
-The original input_agent.csv and resulting agent.csv can be visualized through
-NeXTA.
+The network, source location file input_agent.csv and resulting map matching
+results agent.csv can be visualized through QGIS .
 
-1.  Load the network node.csv and click on the following 4 buttons or menu check
-    box.
+## Step 1: Load GMNS file in QGIS
 
-    ![](media/bb2f8e2690c0478afdef7893260e5a16.png)
+Install and open QGIS and click on menu Layer-\>Add-\>Add Delimited Text Layer.
+In the following dialogue box, load GMNS node.csv and link.csv, and ensure  
+“point coordinates” is selected as geometry definition for node.csv wit x_coord
+and y_coord for “Geometry field”, and WKT is selected as geometry definition for
+link.csv.
 
-2.  The original GPS trace is shown in green and the map-matched route in the
-    network is displayed in purple. The user can use the scroll wheel of the
-    mouse to zoom in the focused area.
+## [media/a2000a16b4bdebbe47434db05ce6af53.png](media/a2000a16b4bdebbe47434db05ce6af53.png)
 
-![](media/2c3e07d7afef6c519cf7ee331e0bace5.png)
+## [media/8e0b2d1685f355c981069838c424dbf5.png](media/8e0b2d1685f355c981069838c424dbf5.png)
+
+## Step 2: Load XYZ Tiles in QGIS with background maps
+
+Find XYZ Tiles and double-click OpenStreetMap on Browser panel. Please move the
+background layer to the bottom to show the GMNS network.
+
+Refence:
+<https://gis.stackexchange.com/questions/20191/adding-basemaps-from-google-or-bing-in-qgis>
+
+![](media/1bfff15305ae3e8a32fa618afdde8918.jpeg)
+
+## Step 3. Visualize input agent, trace and agent files in QGIS
+
+The 'geometry' field can be obtained from link.csv file. Then open this file in
+the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
+
+![](media/4442e2534b75cc10507d353a26516509.png)
+
+![](media/a83fb77f142a7b676f7c9f3f80953d0b.png)
+
+![](media/0bb1ce8e6ab105f54562c7e711593f64.png)
 
 **Reference:**
 
-This code is implemented based on a published paper in Journal of Transportation
+This code is implemented partially based on a published paper in Transportation
 Research Part C:
 
-Estimating the most likely space–time paths, dwell times and path uncertainties
-from vehicle trajectory data: A time geographic method
-
-https://www.sciencedirect.com/science/article/pii/S0968090X15003150
+Tang J, Song Y, Miller HJ, Zhou X (2015) “Estimating the most likely space–time
+paths, dwell times and path uncertainties from vehicle trajectory data: A time
+geographic method,” *Transportation Research Part C*,
+<http://dx.doi.org/10.1016/j.trc.2015.08.014>
