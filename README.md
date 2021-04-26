@@ -15,13 +15,13 @@ https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMN
 
 **Data flow**
 
-|                              | **files**                 | **Source**                                                                           | **Visualization**                                                                                                 |
-|------------------------------|---------------------------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| GMNS network input           | node.csv, link.csv        | [Osm2gmns](https://osm2gmns.readthedocs.io/en/latest/)                               | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/)  |
-| Location sequence data input | Option 1: input_agent.csv | Demand generation model such as [Grid2demand](https://pypi.org/project/grid2demand/) | QGIS                                                                                                              |
-|                              | Option 2: Trace.csv       | Real world location data such as connected vehicle data                              | QGIS                                                                                                              |
-| Map-matched output           | C.agent.csv               |                                                                                      | QGIS                                                                                                              |
-| Link performance output      | Link_perforamnce.csv      |                                                                                      |                                                                                                                   |
+|                              | **files**                 | **Source**                                                                           | **Visualization**                                                                                                |
+|------------------------------|---------------------------|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| GMNS network input           | node.csv, link.csv        | [Osm2gmns](https://osm2gmns.readthedocs.io/en/latest/)                               | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
+| Location sequence data input | Option 1: input_agent.csv | Demand generation model such as [Grid2demand](https://pypi.org/project/grid2demand/) | QGIS                                                                                                             |
+|                              | Option 2: Trace.csv       | Real world location data such as connected vehicle data                              | QGIS                                                                                                             |
+| Map-matched output           | C.agent.csv               |                                                                                      | QGIS                                                                                                             |
+| Link performance output      | Link_perforamnce.csv      |                                                                                      |                                                                                                                  |
 
 1.  **Read standard GMNS network files** node and link files
 
@@ -114,7 +114,7 @@ link.csv.
 
 ## [media/8e0b2d1685f355c981069838c424dbf5.png](media/8e0b2d1685f355c981069838c424dbf5.png)
 
-## Step 2: Load XYZ Tiles in QGIS with background maps
+Step 2: Load XYZ Tiles in QGIS with background maps
 
 Find XYZ Tiles and double-click OpenStreetMap on Browser panel. Please move the
 background layer to the bottom to show the GMNS network.
