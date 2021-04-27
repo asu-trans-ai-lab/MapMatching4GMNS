@@ -7,8 +7,11 @@ Based on input network and given GPS trajectory data, the map-matching program
 of MapMatching4GMNS aims to find the most likely route in terms of node sequence
 in the underlying network, with the following data flow chart.
 
-Test Python Script:
-https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb
+**Linux Test Python Script**:
+<https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb>
+
+**Windows Executable:
+https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/mapmatching4gmns.exe**
 
 [GMNS: General Modeling Network Specification (GMNS)
 ](<https://github.com/zephyr-data-specs/GMNS>)
@@ -110,9 +113,9 @@ In the following dialogue box, load GMNS node.csv and link.csv, and ensure
 and y_coord for “Geometry field”, and WKT is selected as geometry definition for
 link.csv.
 
-## [media/a2000a16b4bdebbe47434db05ce6af53.png](media/a2000a16b4bdebbe47434db05ce6af53.png)
+## [media/337c3df2ec6d98a16fec4df17fd5eebb.png](media/337c3df2ec6d98a16fec4df17fd5eebb.png)
 
-## [media/8e0b2d1685f355c981069838c424dbf5.png](media/8e0b2d1685f355c981069838c424dbf5.png)
+![](media/d38aebb8269ae232b9ea5a684558eced.png)
 
 Step 2: Load XYZ Tiles in QGIS with background maps
 
