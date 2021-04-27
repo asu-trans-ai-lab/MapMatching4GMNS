@@ -113,7 +113,7 @@ In the following dialogue box, load GMNS node.csv and link.csv, and ensure
 and y_coord for “Geometry field”, and WKT is selected as geometry definition for
 link.csv.
 
-## [media/337c3df2ec6d98a16fec4df17fd5eebb.png](media/337c3df2ec6d98a16fec4df17fd5eebb.png)
+![](media/3e5f92dd1b7d253cde1e9f627a6962ce.png)
 
 ![](media/d38aebb8269ae232b9ea5a684558eced.png)
 
