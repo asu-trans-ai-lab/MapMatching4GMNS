@@ -7,24 +7,19 @@ Based on input network and given GPS trajectory data, the map-matching program
 of MapMatching4GMNS aims to find the most likely route in terms of node sequence
 in the underlying network, with the following data flow chart.
 
-**Linux Test Python Script**:
+**Test Python Script**:
 <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb>
-
-**Windows Executable:
-https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/mapmatching4gmns.exe**
 
 [GMNS: General Modeling Network Specification (GMNS)
 ](<https://github.com/zephyr-data-specs/GMNS>)
 
 **Data flow**
 
-|                              | **files**                 | **Source**                                                                           | **Visualization**                                                                                                |
-|------------------------------|---------------------------|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| GMNS network input           | node.csv, link.csv        | [Osm2gmns](https://osm2gmns.readthedocs.io/en/latest/)                               | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
-| Location sequence data input | Option 1: input_agent.csv | Demand generation model such as [Grid2demand](https://pypi.org/project/grid2demand/) | QGIS                                                                                                             |
-|                              | Option 2: Trace.csv       | Real world location data such as connected vehicle data                              | QGIS                                                                                                             |
-| Map-matched output           | C.agent.csv               |                                                                                      | QGIS                                                                                                             |
-| Link performance output      | Link_perforamnce.csv      |                                                                                      |                                                                                                                  |
+|                              | **files**          | **Source**                                                                           | **Visualization**                                                                                                |
+|------------------------------|--------------------|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| GMNS network input           | node.csv, link.csv | [Osm2gmns](https://osm2gmns.readthedocs.io/en/latest/)                               | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
+| Location sequence data input | Trace.csv          | Demand generation model such as [Grid2demand](https://pypi.org/project/grid2demand/) | QGIS                                                                                                             |
+| Map-matched output           | route.csv          |                                                                                      | QGIS                                                                                                             |
 
 1.  **Read standard GMNS network files** node and link files
 
@@ -57,15 +52,13 @@ https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/mapmatc
 
 8.  **Identify matched timestamps** of each node in the likely path
 
-9.  **Output agent file** with **map-matched node sequence** and time sequence
-
-10. **Output link performance** with **estimated link travel time and delay**
-    based on free-flow travel time of each link along the GPS matched routes
+9.  **Output route.csv** with **estimated link travel time and delay** based on
+    free-flow travel time of each link along the GPS matched routes
 
 **Input file description**
 
->   **File node.csv** gives essential node information of the underlying
->   (subarea) network in GMNS format, including node_id, x_coord and y_coord.
+>   **File node.csv** gives essential node information of the underlying network
+>   in GMNS format, including node_id, x_coord and y_coord.
 
 ![](media/22d8257ea35209b83eefefa4eec814c0.png)
 
@@ -84,26 +77,12 @@ formats.
 
 ![](media/5fdd74e09597da19d58779b8aaa7fc60.png)
 
-Another format of trace file is input_agent.csv, which could come from the
-[grid2demand](https://github.com/asu-trans-ai-lab/grid2demand) program. The
-geometry field describes longitude and latitude of each GPS point along the
-trace of each agent. In the following example there are exactly 2 GPS points as
-the origin and destination locations, while other examples can include more than
-2 GPS points along the trace. The geometry field follows the WKT format.
-
-https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
-
-![](media/308de5075f12b12dab40c3309182b047.png)
-
 **Output file description**
 
->   **File agent.csv** describes the most-likely path for each agent based on
+>   **File route.csv** describes the most-likely path for each agent based on
 >   input trajectories.
 
-![](media/caec124ffd9a88d841b924a0dda3d3b7.png)
-
-The network, source location file input_agent.csv and resulting map matching
-results agent.csv can be visualized through QGIS .
+## [media/118bf74177802fd8d8c67f149bf37801.png](media/118bf74177802fd8d8c67f149bf37801.png)
 
 ## Step 1: Load GMNS file in QGIS
 
@@ -125,9 +104,7 @@ background layer to the bottom to show the GMNS network.
 Refence:
 <https://gis.stackexchange.com/questions/20191/adding-basemaps-from-google-or-bing-in-qgis>
 
-![](media/1bfff15305ae3e8a32fa618afdde8918.jpeg)
-
-## Step 3. Visualize input agent, trace and agent files in QGIS
+## Step 3. Visualize input trace and output route files in QGIS
 
 The 'geometry' field can be obtained from link.csv file. Then open this file in
 the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
@@ -136,7 +113,7 @@ the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
 
 ![](media/a83fb77f142a7b676f7c9f3f80953d0b.png)
 
-![](media/0bb1ce8e6ab105f54562c7e711593f64.png)
+![](media/bee94517db0f70b722b56c6fa93f2cfe.png)
 
 **Reference:**
 
