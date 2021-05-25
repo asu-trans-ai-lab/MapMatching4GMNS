@@ -60,7 +60,7 @@ formats.
 >   **File route.csv** describes the most-likely path for each agent based on
 >   input trajectories.
 
-## [media/0cfa691f959cd8e56021c92b5a50f802.png](media/0cfa691f959cd8e56021c92b5a50f802.png)
+![](media/fbc4d80da3096a50ccd22e8d396b689c.png)
 
 ## 4. Visualization
 
