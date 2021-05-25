@@ -14,11 +14,11 @@ GMNS: General Modeling Network Specification (GMNS)
 
 ## 2. Data flow
 
-|                              | **files**          | **Data Source**                                                                                                                                                  | **Visualization**                                                                                                |
-|------------------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| GMNS network input           | node.csv, link.csv | [Osm4GMNS](https://osm2gmns.readthedocs.io/en/latest/)                                                                                                           | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
-| Location sequence data input | trace.csv          | GPS traces downloaded from OpenStreetMap, e.g., using the script at <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/get_gps_trace.py>  | QGIS                                                                                                             |
-| Map-matched output           | route.csv          |                                                                                                                                                                  | QGIS                                                                                                             |
+|                              | **files**          | **Data Source**                                                                                                                                                 | **Visualization**                                                                                                |
+|------------------------------|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| GMNS network input           | node.csv, link.csv | [Osm4GMNS](https://osm2gmns.readthedocs.io/en/latest/)                                                                                                          | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
+| Location sequence data input | trace.csv          | GPS traces downloaded from OpenStreetMap, e.g., using the script at <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/get_gps_trace.py> | QGIS                                                                                                             |
+| Map-matched output           | route.csv          |                                                                                                                                                                 | QGIS                                                                                                             |
 
 The M4G program can be executed using one of the following 2 different modes:
 The Python package mode is mainly used in an effective integration with other
@@ -60,11 +60,11 @@ formats.
 >   **File route.csv** describes the most-likely path for each agent based on
 >   input trajectories.
 
-[media/0cfa691f959cd8e56021c92b5a50f802.png](media/0cfa691f959cd8e56021c92b5a50f802.png)
+## [media/0cfa691f959cd8e56021c92b5a50f802.png](media/0cfa691f959cd8e56021c92b5a50f802.png)
 
+## 4. Visualization
 
-##4. Visulization
-###Step 1: Load GMNS files in QGIS
+### Step 1: Load GMNS files in QGIS
 
 Install and open QGIS and click on menu Layer-\>Add-\>Add Delimited Text Layer.
 In the following dialogue box, load GMNS node.csv and link.csv, and ensure  
@@ -76,7 +76,7 @@ link.csv.
 
 ![](media/d38aebb8269ae232b9ea5a684558eced.png)
 
-###Step 2: Load XYZ Tiles in QGIS with background maps
+### Step 2: Load XYZ Tiles in QGIS with background maps
 
 Find XYZ Tiles and double-click OpenStreetMap on Browser panel. Please move the
 background layer to the bottom to show the GMNS network.
@@ -84,7 +84,7 @@ background layer to the bottom to show the GMNS network.
 Refence:
 <https://gis.stackexchange.com/questions/20191/adding-basemaps-from-google-or-bing-in-qgis>
 
-###Step 3. Visualize input trace and output route files in QGIS
+### Step 3. Visualize input trace and output route files in QGIS
 
 The 'geometry' field can be obtained from link.csv file. Then open this file in
 the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
@@ -95,7 +95,8 @@ the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
 
 ![](media/bee94517db0f70b722b56c6fa93f2cfe.png)
 
-##5. Algorithm
+## 5. Algorithm
+
 1.  **Read standard GMNS network files** node and link files, **Read GPS
     trace.csv** file
 
@@ -129,7 +130,7 @@ the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
 8.  **Output route.csv** with **estimated link travel time and delay** based on
     free-flow travel time of each link along the GPS matched routes
 
-##Reference
+## Reference
 
 This code is implemented partially based on a published paper in Transportation
 Research Part C:
