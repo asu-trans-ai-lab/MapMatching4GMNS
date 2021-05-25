@@ -3,7 +3,7 @@
 Please send your comments to <xzhou74@asu.edu> if you have any suggestions and
 questions.
 
-**1. Introduction**
+## 1. Introduction
 
 Based on input network and given GPS trajectory data, the map-matching program
 of MapMatching4GMNS aims to find the most likely route in terms of node sequence
@@ -12,7 +12,7 @@ in the underlying network, with the following data flow chart.
 GMNS: General Modeling Network Specification (GMNS)
 (<https://github.com/zephyr-data-specs/GMNS>)
 
-**2. Data flow**
+## 2. Data flow
 
 |                              | **files**          | **Data Source**                                                                                                                                                  | **Visualization**                                                                                                |
 |------------------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
@@ -33,7 +33,7 @@ environment.
 
 <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/tree/master/release>
 
-**3. File description**
+## 3. File description
 
 >   **File node.csv** gives essential node information of the underlying network
 >   in GMNS format, including node_id, x_coord and y_coord.
@@ -60,11 +60,11 @@ formats.
 >   **File route.csv** describes the most-likely path for each agent based on
 >   input trajectories.
 
-## [media/0cfa691f959cd8e56021c92b5a50f802.png](media/0cfa691f959cd8e56021c92b5a50f802.png)
+[media/0cfa691f959cd8e56021c92b5a50f802.png](media/0cfa691f959cd8e56021c92b5a50f802.png)
 
 
-**4. Visulization**
-## Step 1: Load GMNS files in QGIS
+##4. Visulization
+###Step 1: Load GMNS files in QGIS
 
 Install and open QGIS and click on menu Layer-\>Add-\>Add Delimited Text Layer.
 In the following dialogue box, load GMNS node.csv and link.csv, and ensure  
@@ -76,7 +76,7 @@ link.csv.
 
 ![](media/d38aebb8269ae232b9ea5a684558eced.png)
 
-## Step 2: Load XYZ Tiles in QGIS with background maps
+###Step 2: Load XYZ Tiles in QGIS with background maps
 
 Find XYZ Tiles and double-click OpenStreetMap on Browser panel. Please move the
 background layer to the bottom to show the GMNS network.
@@ -84,7 +84,7 @@ background layer to the bottom to show the GMNS network.
 Refence:
 <https://gis.stackexchange.com/questions/20191/adding-basemaps-from-google-or-bing-in-qgis>
 
-## Step 3. Visualize input trace and output route files in QGIS
+###Step 3. Visualize input trace and output route files in QGIS
 
 The 'geometry' field can be obtained from link.csv file. Then open this file in
 the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
@@ -95,7 +95,7 @@ the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
 
 ![](media/bee94517db0f70b722b56c6fa93f2cfe.png)
 
-**5. Algorithm**
+##5. Algorithm
 1.  **Read standard GMNS network files** node and link files, **Read GPS
     trace.csv** file
 
@@ -129,7 +129,7 @@ the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
 8.  **Output route.csv** with **estimated link travel time and delay** based on
     free-flow travel time of each link along the GPS matched routes
 
-**Reference:**
+##Reference
 
 This code is implemented partially based on a published paper in Transportation
 Research Part C:
