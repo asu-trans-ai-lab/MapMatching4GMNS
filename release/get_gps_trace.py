@@ -1,11 +1,11 @@
 # @author       Jiawei Lu (jiaweil9@asu.edu)
 # @time         2021/4/29 12:11
 # @desc         [script description]
-'''
-    Download and format trace data directly from OpenStreetMap** 
+"""
+    Download and format trace data directly from OpenStreetMap**
     python get_gps_trace.py*
     Note: If you set up a network that is wider, the more trace information you get, and the longer you download and format it.
-'''
+"""
 from urllib.request import urlopen
 import multiprocessing as mp
 import xml.etree.cElementTree as ET
@@ -21,7 +21,7 @@ max_lon = -111.915025
 max_lat = 33.432364
 
 
-processors = 20
+processors = 8
 output_xml = False
 
 url_template = 'https://api.openstreetmap.org/api/0.6/trackpoints?bbox={},{},{},{}&page={}'
@@ -99,7 +99,6 @@ def downloadGPSData():
                 vehicle_trace_list_.append((vehicle_no, *trace_point))
             vehicle_no += 1
 
-
     # vehicle_trace_list = []
     # for sub_bbox in sub_bbox_list:
     #     vehicle_trace_list_region = getRegionData(sub_bbox)
@@ -111,9 +110,32 @@ def downloadGPSData():
     #         vehicle_trace_list_.append((vehicle_no, *trace_point))
 
 
-    vehicle_trace_df = pd.DataFrame(vehicle_trace_list_, columns=['agent_id','time','lon','lat'])
-    vehicle_trace_df.to_csv('osm_gps.csv', index=False)
+    vehicle_trace_df = pd.DataFrame(vehicle_trace_list_, columns=['agent_id','time','x_coord','y_coord'])
 
+    p = re.compile('T(.*)Z')
+    additional_info_list = []
+    pre_agent_id = -1
+    point_no = 0
+    for i in range(len(vehicle_trace_df)):
+        agent_id = vehicle_trace_df.loc[i,'agent_id']
+        if agent_id != pre_agent_id:
+            point_no = 0
+        else:
+            point_no += 1
+        time_str_list = re.findall(p,vehicle_trace_df.loc[i,'time'])
+        try:
+            time_str = time_str_list[0]
+            hh,mm,ss = time_str.split(':')
+        except:
+            hh,mm,ss = '', '', ''
+        additional_info_list.append((point_no, hh, mm, ss))
+        pre_agent_id = agent_id
+
+    additional_info_df = pd.DataFrame(additional_info_list, columns=['trace_point_no','hh','mm','ss'])
+
+    vehicle_trace_complete = pd.concat([vehicle_trace_df, additional_info_df], axis=1)
+    vehicle_trace_complete = vehicle_trace_complete[['trace_point_no','agent_id','x_coord','y_coord','time','hh','mm','ss']]
+    vehicle_trace_complete.to_csv('osm_gps.csv', index=False)
 
 
 if __name__ == '__main__':

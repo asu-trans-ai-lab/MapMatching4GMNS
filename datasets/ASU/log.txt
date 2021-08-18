@@ -1,0 +1,326 @@
+trace index 1, cell id -11193996659
+trace index 2, cell id -11193996659
+trace index 3, cell id -11193996659
+trace index 4, cell id -11193996659
+trace index 5, cell id -11193996659
+trace index 6, cell id -11193996659
+trace index 7, cell id -11193996659
+trace index 8, cell id -11193996659
+trace index 9, cell id -11193996659
+trace index 10, cell id -11193996659
+trace index 11, cell id -11193996659
+trace index 12, cell id -11193996659
+trace index 13, cell id -11193996659
+trace index 14, cell id -11193996659
+trace index 15, cell id -11193996659
+trace index 16, cell id -11193996659
+trace index 17, cell id -11193996659
+trace index 18, cell id -11193996658
+trace index 19, cell id -11193996658
+trace index 20, cell id -11193996658
+trace index 21, cell id -11193996658
+trace index 22, cell id -11193996658
+trace index 23, cell id -11193996658
+trace index 24, cell id -11193996658
+trace index 25, cell id -11193996658
+trace index 26, cell id -11193996658
+trace index 27, cell id -11193996658
+trace index 28, cell id -11193996658
+trace index 29, cell id -11193996658
+trace index 30, cell id -11193996658
+trace index 31, cell id -11193996658
+trace index 32, cell id -11193996658
+trace index 33, cell id -11193996658
+trace index 34, cell id -11193996658
+trace index 35, cell id -11193996658
+trace index 36, cell id -11193996658
+trace index 37, cell id -11193996658
+trace index 38, cell id -11193996658
+trace index 39, cell id -11193996658
+trace index 40, cell id -11193996658
+trace index 41, cell id -11193996658
+trace index 42, cell id -11193996658
+trace index 43, cell id -11193996658
+trace index 44, cell id -11194996658
+trace index 45, cell id -11193996658
+trace index 46, cell id -11194996658
+trace index 47, cell id -11194996658
+trace index 48, cell id -11194996658
+trace index 49, cell id -11194996658
+trace index 50, cell id -11194996658
+trace index 51, cell id -11193996657
+trace index 52, cell id -11194996657
+trace index 53, cell id -11194996657
+agent index 6, GPS point size = 53 
+trace index 0, trace id: 1, cell 1, 0, -858993460 
+trace index 1, trace id: 2, cell 1, 0, -858993460 
+trace index 2, trace id: 3, cell 1, 0, -858993460 
+trace index 3, trace id: 4, cell 1, 0, -858993460 
+trace index 4, trace id: 5, cell 1, 0, -858993460 
+trace index 5, trace id: 6, cell 1, 0, -858993460 
+trace index 6, trace id: 7, cell 1, 0, -858993460 
+trace index 7, trace id: 8, cell 1, 0, -858993460 
+trace index 8, trace id: 9, cell 1, 0, -858993460 
+trace index 9, trace id: 10, cell 1, 0, -858993460 
+trace index 10, trace id: 11, cell 1, 0, -858993460 
+trace index 11, trace id: 12, cell 1, 0, -858993460 
+trace index 12, trace id: 13, cell 1, 0, -858993460 
+trace index 13, trace id: 14, cell 1, 0, -858993460 
+trace index 14, trace id: 15, cell 1, 0, -858993460 
+trace index 15, trace id: 16, cell 1, 0, -858993460 
+trace index 16, trace id: 17, cell 1, 0, -858993460 
+trace index 17, trace id: 18, cell 1, 1, -858993460 
+trace index 18, trace id: 19, cell 1, 1, -858993460 
+trace index 19, trace id: 20, cell 1, 1, -858993460 
+trace index 20, trace id: 21, cell 1, 1, -858993460 
+trace index 21, trace id: 22, cell 1, 1, -858993460 
+trace index 22, trace id: 23, cell 1, 1, -858993460 
+trace index 23, trace id: 24, cell 1, 1, -858993460 
+trace index 24, trace id: 25, cell 1, 1, -858993460 
+trace index 25, trace id: 26, cell 1, 1, -858993460 
+trace index 26, trace id: 27, cell 1, 1, -858993460 
+trace index 27, trace id: 28, cell 1, 1, -858993460 
+trace index 28, trace id: 29, cell 1, 1, -858993460 
+trace index 29, trace id: 30, cell 1, 1, -858993460 
+trace index 30, trace id: 31, cell 1, 1, -858993460 
+trace index 31, trace id: 32, cell 1, 1, -858993460 
+trace index 32, trace id: 33, cell 1, 1, -858993460 
+trace index 33, trace id: 34, cell 1, 1, -858993460 
+trace index 34, trace id: 35, cell 1, 1, -858993460 
+trace index 35, trace id: 36, cell 1, 1, -858993460 
+trace index 36, trace id: 37, cell 1, 1, -858993460 
+trace index 37, trace id: 38, cell 1, 1, -858993460 
+trace index 38, trace id: 39, cell 1, 1, -858993460 
+trace index 39, trace id: 40, cell 1, 1, -858993460 
+trace index 40, trace id: 41, cell 1, 1, -858993460 
+trace index 41, trace id: 42, cell 1, 1, -858993460 
+trace index 42, trace id: 43, cell 1, 1, -858993460 
+trace index 43, trace id: 44, cell 0, 1, -858993460 
+trace index 44, trace id: 45, cell 1, 1, -858993460 
+trace index 45, trace id: 46, cell 0, 1, -858993460 
+trace index 46, trace id: 47, cell 0, 1, -858993460 
+trace index 47, trace id: 48, cell 0, 1, -858993460 
+trace index 48, trace id: 49, cell 0, 1, -858993460 
+trace index 49, trace id: 50, cell 0, 1, -858993460 
+trace index 50, trace id: 51, cell 1, 2, -858993460 
+trace index 51, trace id: 52, cell 0, 2, -858993460 
+trace index 52, trace id: 53, cell 0, 2, -858993460 
+finding origin_node: 378 -> 1, 0.127442 
+finding origin_node: 14 -> 92, 0.113441 
+finding origin_node: 191 -> 17, 0.095977 
+finding origin_node: 17 -> 191, 0.009588 
+finding origin_node: 19 -> 148, 0.009566 
+finding origin_node: 73 -> 19, 0.009146 
+finding origin_node: 76 -> 380, 0.007152 
+finding origin_node: 121 -> 21, 0.007073 
+finding origin_node: 63 -> 135, 0.003665 
+finding origin_node: 314 -> 134, 0.002295 
+finding origin_node: 402 -> 131, 0.000493 
+finding destination_node: 378 -> 1, 0.072511 
+finding destination_node: 1 -> 378, 0.007218 
+finding destination_node: 163 -> 359, 0.003107 
+finding destination_node: 145 -> 176, 0.001401 
+arc cost 201 -> 202 at time index 0 and sec 0 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 1 and sec 2 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 2 and sec 6 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 3 and sec 8 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 4 and sec 12 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 5 and sec 15 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 6 and sec 17 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 7 and sec 21 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 8 and sec 23 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 9 and sec 27 = 0.000939, hit flag: 0: GPS point ID: 9 
+arc cost 201 -> 202 at time index 10 and sec 30 = 0.000939, hit flag: 0: GPS point ID: 9 
+arc cost 201 -> 202 at time index 11 and sec 32 = 0.000561, hit flag: 0: GPS point ID: 10 
+arc cost 201 -> 202 at time index 12 and sec 36 = 0.000041, hit flag: 1: GPS point ID: 11 
+arc cost 201 -> 202 at time index 13 and sec 38 = 0.000595, hit flag: 0: GPS point ID: 12 
+arc cost 201 -> 202 at time index 14 and sec 42 = 0.000595, hit flag: 0: GPS point ID: 12 
+arc cost 201 -> 202 at time index 15 and sec 45 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 16 and sec 47 = 0.000517, hit flag: 0: GPS point ID: 13 
+arc cost 201 -> 202 at time index 17 and sec 51 = 0.000517, hit flag: 0: GPS point ID: 13 
+arc cost 201 -> 202 at time index 18 and sec 53 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 19 and sec 57 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 20 and sec 60 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 21 and sec 62 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 22 and sec 66 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 23 and sec 68 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 24 and sec 72 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 25 and sec 75 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 26 and sec 77 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 27 and sec 81 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 28 and sec 83 = 0.000366, hit flag: 0: GPS point ID: 14 
+arc cost 201 -> 202 at time index 29 and sec 87 = 0.000517, hit flag: 0: GPS point ID: 15 
+arc cost 201 -> 202 at time index 30 and sec 90 = 0.000914, hit flag: 0: GPS point ID: 16 
+arc cost 201 -> 202 at time index 31 and sec 92 = 0.000914, hit flag: 0: GPS point ID: 16 
+arc cost 201 -> 202 at time index 32 and sec 96 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 33 and sec 98 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 34 and sec 102 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 35 and sec 105 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 36 and sec 107 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 37 and sec 111 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 38 and sec 113 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 39 and sec 117 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 40 and sec 120 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 41 and sec 122 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 42 and sec 126 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 43 and sec 128 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 44 and sec 132 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 45 and sec 135 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 46 and sec 137 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 47 and sec 141 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 48 and sec 143 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 49 and sec 147 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 50 and sec 150 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 51 and sec 152 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 52 and sec 156 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 53 and sec 158 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 54 and sec 162 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 55 and sec 165 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 56 and sec 167 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 57 and sec 171 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 58 and sec 173 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 59 and sec 177 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 60 and sec 180 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 61 and sec 182 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 62 and sec 186 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 63 and sec 188 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 64 and sec 192 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 65 and sec 195 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 66 and sec 197 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 67 and sec 201 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 68 and sec 203 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 69 and sec 207 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 70 and sec 210 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 71 and sec 212 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 72 and sec 216 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 73 and sec 218 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 74 and sec 222 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 75 and sec 225 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 76 and sec 227 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 77 and sec 231 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 78 and sec 233 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 79 and sec 237 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 80 and sec 240 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 81 and sec 243 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 82 and sec 246 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 83 and sec 248 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 84 and sec 252 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 85 and sec 255 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 86 and sec 258 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 87 and sec 261 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 88 and sec 263 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 89 and sec 267 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 90 and sec 270 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 91 and sec 273 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 92 and sec 276 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 93 and sec 278 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 94 and sec 282 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 95 and sec 285 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 96 and sec 288 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 97 and sec 291 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 98 and sec 293 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 99 and sec 297 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 100 and sec 300 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 101 and sec 303 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 102 and sec 306 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 103 and sec 308 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 104 and sec 312 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 105 and sec 315 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 106 and sec 318 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 107 and sec 321 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 108 and sec 323 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 201 -> 202 at time index 109 and sec 327 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 0 and sec 0 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 1 and sec 2 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 2 and sec 6 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 3 and sec 8 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 4 and sec 12 = 0.006151, hit flag: 0: GPS point ID: 5 
+arc cost 202 -> 135 at time index 5 and sec 15 = 0.004509, hit flag: 0: GPS point ID: 6 
+arc cost 202 -> 135 at time index 6 and sec 17 = 0.002531, hit flag: 0: GPS point ID: 7 
+arc cost 202 -> 135 at time index 7 and sec 21 = 0.002028, hit flag: 0: GPS point ID: 8 
+arc cost 202 -> 135 at time index 8 and sec 23 = 0.002028, hit flag: 0: GPS point ID: 8 
+arc cost 202 -> 135 at time index 9 and sec 27 = 0.001294, hit flag: 0: GPS point ID: 9 
+arc cost 202 -> 135 at time index 10 and sec 30 = 0.001294, hit flag: 0: GPS point ID: 9 
+arc cost 202 -> 135 at time index 11 and sec 32 = 0.000869, hit flag: 0: GPS point ID: 10 
+arc cost 202 -> 135 at time index 12 and sec 36 = 0.010000, hit flag: 1: GPS point ID: 11 
+arc cost 202 -> 135 at time index 13 and sec 38 = 0.000776, hit flag: 0: GPS point ID: 12 
+arc cost 202 -> 135 at time index 14 and sec 42 = 0.000776, hit flag: 0: GPS point ID: 12 
+arc cost 202 -> 135 at time index 15 and sec 45 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 16 and sec 47 = 0.000045, hit flag: 1: GPS point ID: 13 
+arc cost 202 -> 135 at time index 17 and sec 51 = 0.000045, hit flag: 1: GPS point ID: 13 
+arc cost 202 -> 135 at time index 18 and sec 53 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 19 and sec 57 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 20 and sec 60 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 21 and sec 62 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 22 and sec 66 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 23 and sec 68 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 24 and sec 72 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 25 and sec 75 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 26 and sec 77 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 27 and sec 81 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 28 and sec 83 = 0.000027, hit flag: 1: GPS point ID: 14 
+arc cost 202 -> 135 at time index 29 and sec 87 = 0.000342, hit flag: 0: GPS point ID: 15 
+arc cost 202 -> 135 at time index 30 and sec 90 = 0.000565, hit flag: 0: GPS point ID: 16 
+arc cost 202 -> 135 at time index 31 and sec 92 = 0.000565, hit flag: 0: GPS point ID: 16 
+arc cost 202 -> 135 at time index 32 and sec 96 = 0.001203, hit flag: 0: GPS point ID: 17 
+arc cost 202 -> 135 at time index 33 and sec 98 = 0.001203, hit flag: 0: GPS point ID: 17 
+arc cost 202 -> 135 at time index 34 and sec 102 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 35 and sec 105 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 36 and sec 107 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 37 and sec 111 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 38 and sec 113 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 39 and sec 117 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 40 and sec 120 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 41 and sec 122 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 42 and sec 126 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 43 and sec 128 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 44 and sec 132 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 45 and sec 135 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 46 and sec 137 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 47 and sec 141 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 48 and sec 143 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 49 and sec 147 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 50 and sec 150 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 51 and sec 152 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 52 and sec 156 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 53 and sec 158 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 54 and sec 162 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 55 and sec 165 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 56 and sec 167 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 57 and sec 171 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 58 and sec 173 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 59 and sec 177 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 60 and sec 180 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 61 and sec 182 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 62 and sec 186 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 63 and sec 188 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 64 and sec 192 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 65 and sec 195 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 66 and sec 197 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 67 and sec 201 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 68 and sec 203 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 69 and sec 207 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 70 and sec 210 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 71 and sec 212 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 72 and sec 216 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 73 and sec 218 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 74 and sec 222 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 75 and sec 225 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 76 and sec 227 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 77 and sec 231 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 78 and sec 233 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 79 and sec 237 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 80 and sec 240 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 81 and sec 243 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 82 and sec 246 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 83 and sec 248 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 84 and sec 252 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 85 and sec 255 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 86 and sec 258 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 87 and sec 261 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 88 and sec 263 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 89 and sec 267 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 90 and sec 270 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 91 and sec 273 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 92 and sec 276 = 999.000000, hit flag: -1: GPS point ID: -1 
+arc cost 202 -> 135 at time index 93 and sec 278 = 9
