@@ -31,7 +31,7 @@ using namespace std;
 #define PI_ 3.1415
 float g_NonHitDistanceRatio = 10;
 
-float g_GridResolution = 0.005;  // in terms of long/lat 
+float g_GridResolution = 0.05;  // in terms of long/lat 
 float g_TimeResolution_inMin = 0.05;  //min --> 3 seconds
 float g_SampleTimeResolution_inMin = 0.05; //min --> 3 seconds
 float g_StartTimeinMin = 999999;
@@ -766,6 +766,8 @@ public:
     int tail_gps_index;
 
     string agent_id;
+
+    std::vector <int> likely_trace_no_vector;
     float volume;
     float distance;
     float travel_time;
@@ -1263,6 +1265,7 @@ public:
         for (int i = 0; i < g_link_vector.size(); i++) // reset the cost for all links
         {
            g_link_vector[i].likely_trace_no = -1;
+           m_link_matching_trace_no_array[i] = -1;
         }
 
         for (int x_i = 0; x_i <= g_grid_size; x_i++)
@@ -1447,7 +1450,7 @@ public:
 
 
                         double p2l_distance_hit = g_GetPoint2LineDistance(&m_GridMatrix[x_i][y_i].m_GPSPointVector[g].pt, &g_node_vector[g_link_vector[l].from_node_seq_no].pt, &g_node_vector[g_link_vector[l].to_node_seq_no].pt,
-                            1, false); \
+                            1, false); 
 
                             for (int ls = 0; ls < g_link_vector[l].m_PointVector.size() - 1; ls++)  //for a pair of shape points along the link
                             {
@@ -1484,11 +1487,6 @@ public:
                             // distance to is the distance from GPS point g to to node of link
                             double nonhit_distance = (p2l_distance * 10 + distance_from + distance_to) / 10;
 
-                            //if (g_link_vector[l].to_node_id == 172)
-                            //{
-                            //TRACE("grid: %d,%d,trace_d: %d, dist = %f\n",
-                            //	x_i, y_i,m_GridMatrix[x_i][y_i].m_GPSPointVector[g + 1].trace_id, distance);
-                            //}
 
                             if (nonhit_distance > g_link_vector[l].link_distance * 2)  // filter out long deviation
                                 continue;
@@ -1533,6 +1531,36 @@ public:
                     }
                 }
 
+            
+
+                    // stage 2 handling for no matching trace_no for the link
+
+
+                    for (int local_l = 0; local_l < m_GridMatrix[x_i][y_i].m_LinkNoVector.size(); local_l++) // for all links in this cell
+                    {
+                        int l = m_GridMatrix[x_i][y_i].m_LinkNoVector[local_l];
+                         
+                        if (m_link_matching_trace_no_array[l] < 0)  // no matching GPS points
+                        {
+                            double min_distance = 99999999;
+                            int trace_no = -1;
+                            for (int g = 0; g < m_GridMatrix[x_i][y_i].m_GPSPointVector.size(); g++) // for each GPS point of an agent in the cell
+                            {
+                                double p2l_distance = g_GetPoint2LineDistance(&m_GridMatrix[x_i][y_i].m_GPSPointVector[g].pt, &g_node_vector[g_link_vector[l].from_node_seq_no].pt, &g_node_vector[g_link_vector[l].to_node_seq_no].pt,
+                                    1, false);
+                                if (p2l_distance < min_distance)
+                                {
+                                    min_distance = p2l_distance;
+                                    trace_no = m_GridMatrix[x_i][y_i].m_GPSPointVector[g].trace_no;
+                                }
+
+                            }
+
+                            m_link_matching_trace_no_array[l] = trace_no;
+
+                        }
+
+                }
             }
 
         for (int i = 0; i < g_link_vector.size(); i++) // reset the cost for all links
@@ -2263,10 +2291,21 @@ public:
       if (origin_node_no >= 0 && destination_node_no >= 0) //feasible origin and destination nodes
       {
         p_agent->o_node_id = g_node_vector[origin_node_no].node_id;
-
         p_agent->d_node_id = g_node_vector[destination_node_no].node_id;
       }
 
+      for (int i = 0; i < p_agent->m_node_size - 2; i++)
+      {
+          int link_no = g_node_vector[p_agent->path_node_vector[i]].m_outgoing_link_seq_no_map[p_agent->path_node_vector[i + 1]];
+
+
+          p_agent->likely_trace_no_vector.push_back(g_link_vector[link_no].likely_trace_no);
+      }
+
+      for (int link = 0; link < g_link_vector.size(); link++)
+      {
+          g_link_vector[link].likely_trace_no = -1;
+      }
     }
   }
   void find_TD_path_for_agents_assigned_for_this_thread()
@@ -2476,10 +2515,10 @@ void g_DetermineResolution()
         int grid_size = 5;
 
         if (node_count > 10000)
-            grid_size = 10;
+            grid_size = 8;
 
         if (node_count > 40000)
-            grid_size = 15;
+            grid_size = 10;
 
 
         double temp_resolution = (((m_right - m_left) / grid_size + (m_top - m_bottom) / grid_size))/2.0;
@@ -2905,6 +2944,7 @@ void g_ReadTraceCSVFile()
                 GPSPoint.cell_id = cell_id;
                 g_agent_vector[g_internal_agent_no_map[agent_id]].m_GPSPointVector.push_back(GPSPoint);
 
+                
                 if (time_in_min < g_StartTimeinMin)
                     g_StartTimeinMin = time_in_min;
 
@@ -3129,7 +3169,7 @@ void g_OutputRouteCSVFile()
   }
   else
   {
-    fprintf(g_pFileLinkRoute, "agent_id,from_node_id,to_node_id,link_id,trace_no,trace_id,distance,geometry\n");
+    fprintf(g_pFileLinkRoute, "agent_id,from_node_id,to_node_id,link_id,trace_no,trace_id,distance,link_type_code,geometry\n");
 
     for (int a = 0; a < g_agent_vector.size(); a++)
     {
@@ -3146,12 +3186,13 @@ void g_OutputRouteCSVFile()
           fprintf(g_pFileLinkRoute, "%s,", p_agent->agent_id.c_str());
           fprintf(g_pFileLinkRoute, "%d,%d,%d,", g_link_vector[link_no].from_node_id, g_link_vector[link_no].to_node_id, g_link_vector[link_no].link_id);
         // timestamp
-          fprintf(g_pFileLinkRoute, "%d,", g_link_vector[link_no].likely_trace_no);
+          int trace_no = p_agent->likely_trace_no_vector[i];
+          fprintf(g_pFileLinkRoute, "%d,", trace_no);
 
           string trace_id;
-          if (g_internal_trace_no_2_trace_id_map.find(g_link_vector[link_no].likely_trace_no) != g_internal_trace_no_2_trace_id_map.end())
+          if (g_internal_trace_no_2_trace_id_map.find(trace_no) != g_internal_trace_no_2_trace_id_map.end())
           {
-              trace_id = g_internal_trace_no_2_trace_id_map[g_link_vector[link_no].likely_trace_no];
+              trace_id = g_internal_trace_no_2_trace_id_map[trace_no];
           }
 
             if(trace_id.size() > 0)
@@ -3161,6 +3202,11 @@ void g_OutputRouteCSVFile()
             
             cumulative_distance += g_link_vector[link_no].length;
             fprintf(g_pFileLinkRoute, "%f,", cumulative_distance);
+
+            if (g_link_vector[link_no].link_type_code.size() > 0)
+                fprintf(g_pFileLinkRoute, "%s,", g_link_vector[link_no].link_type_code.c_str());
+            else
+                fprintf(g_pFileLinkRoute, ",");
 
           //update upstream node from the current link
           fprintf(g_pFileLinkRoute, "\"%s\",", g_link_vector[link_no].geometry.c_str());
