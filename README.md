@@ -1,13 +1,19 @@
 # MapMatching4GMNS
 
-Please send your comments to <xzhou74@asu.edu> if you have any suggestions and
-questions.
+Please send your comments to [xzhou74@asu.edu](mailto:xzhou74@asu.edu) if you
+have any suggestions and questions.
+
+A work-in-progress user guide can be found at
+
+[User Guide of Trace2Route_v3 - Google
+Docs](https://docs.google.com/document/d/1ZfUZ3OkZtNu9zwarQUN8XfnSBc8LvDT9HkMFgq9_jds/edit)
 
 ## 1. Introduction
 
 Based on input network and given GPS trajectory data, the map-matching program
-of MapMatching4GMNS aims to find the most likely route in terms of node sequence
-in the underlying network, with the following data flow chart.
+of MapMatching4GMNS (trace2route.exe) aims to find the most likely route in
+terms of node sequence in the underlying network, with the following data flow
+chart.
 
 GMNS: General Modeling Network Specification (GMNS)
 (<https://github.com/zephyr-data-specs/GMNS>)
@@ -16,20 +22,11 @@ GMNS: General Modeling Network Specification (GMNS)
 
 |                              | **files**          | **Data Source**                                                                                                                                                 | **Visualization**                                                                                                |
 |------------------------------|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| GMNS network input           | node.csv, link.csv | [Osm4GMNS](https://osm2gmns.readthedocs.io/en/latest/)                                                                                                          | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
+| GMNS network input           | node.csv, link.csv | [Openstreetmap](https://osm2gmns.readthedocs.io/en/latest/)                                                                                                     | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
 | Location sequence data input | trace.csv          | GPS traces downloaded from OpenStreetMap, e.g., using the script at <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/get_gps_trace.py> | QGIS                                                                                                             |
 | Map-matched output           | route.csv          |                                                                                                                                                                 | QGIS                                                                                                             |
 
-The M4G program can be executed using one of the following 2 different modes:
-The Python package mode is mainly used in an effective integration with other
-packages such as OSM2GMNS and Path2GMNS. The windows executable mode aims to
-help users generate the results directly without replying on the python
-environment.
-
-**Mode 1: Python package and test script**:
-<https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/MapMatching4GMNS.ipynb>
-
-**Mode 2: Windows Executable: M4G.exe** can be found from
+**Windows Executable: trace2route.exe** can be found from
 
 <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/tree/master/release>
 
@@ -100,34 +97,34 @@ the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
 1.  **Read standard GMNS network files** node and link files, **Read GPS
     trace.csv** file
 
-    Note: the M4G program will convert trace.csv to input_agent.csv for
+2.  Note: the TRACE2ROUTE program will convert trace.csv to input_agent.csv for
     visualization in NeXTA.
 
-2.  **Construct 2d grid system** to speed up the indexing of GSP points to the
+3.  **Construct 2d grid system** to speed up the indexing of GSP points to the
     network. For example, a 10x10 grid for a network of 100 K nodes could lead
     to 1K nodes in each cell.
 
-3.  **Identify the related subarea** for the traversed cells by each GPS trace,
+4.  **Identify the related subarea** for the traversed cells by each GPS trace,
     so only a small subset of the network will be loaded in the resulting
     shortest path algorithm.
 
-4.  **Identify the origin and destination** nodes in the grid for each GPS
+5.  **Identify the origin and destination** nodes in the grid for each GPS
     trace, in case, the GPS trace does not start from or end at a node inside
     the network (in this case, the boundary origin and destination nodes will be
     identified). The OD node identification is important to run the following
     shortest path algorithm.
 
-5.  **Estimate link cost** to calculate a generalized weight/cost for each link
+6.  **Estimate link cost** to calculate a generalized weight/cost for each link
     in the cell, that is, the distance from nearly GPS points to a link inside
     the cell.
 
-6.  Use **likely path finding algorithm** selects the least cost path with the
+7.  Use **likely path finding algorithm** selects the least cost path with the
     smallest generalized cumulative cost from the beginning to the end of the
     GPS trace.
 
-7.  **Identify matched timestamps** of each node in the likely path
+8.  **Identify matched timestamps** of each node in the likely path
 
-8.  **Output route.csv** with **estimated link travel time and delay** based on
+9.  **Output route.csv** with **estimated link travel time and delay** based on
     free-flow travel time of each link along the GPS matched routes
 
 ## Reference
