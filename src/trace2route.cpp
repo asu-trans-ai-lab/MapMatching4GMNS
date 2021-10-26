@@ -766,6 +766,8 @@ public:
     int tail_gps_index;
 
     string agent_id;
+    string agent_name;
+
 
     std::vector <int> likely_trace_no_vector;
     float volume;
@@ -1075,6 +1077,17 @@ public:
         for (int l = 0; l < g_link_vector.size(); l++) // for all links in this cell
         {
 
+            string s1 = g_agent_vector[agent_no].link_type_code;
+            string s2 = g_link_vector[l].link_type_code;
+
+            if(s1.size() > 0 && s2.size() >0) // both agent and link with link type code
+            {
+                if (s1.find(s2) == std::string::npos)
+                {
+                    continue;  // s2 is not contained in s1, skip this type of links in identifying origins
+                }
+            }
+
             double distance = MAX_LABEL_COST_;
 
             TRACE("%d->%d\n", g_link_vector[l].from_node_id, g_link_vector[l].to_node_id);
@@ -1171,6 +1184,16 @@ public:
         {
             TRACE("%d->%d\n", g_link_vector[l].from_node_id, g_link_vector[l].to_node_id);
 
+            string s1 = g_agent_vector[agent_no].link_type_code;
+            string s2 = g_link_vector[l].link_type_code;
+
+            if (s1.size() > 0 && s2.size() > 0)  // both agent and link with link type code
+            {
+                if (s1.find(s2) == std::string::npos)
+                {
+                    continue;  // s2 is not contained in s1, skip this type of links in identifying origins
+                }
+            }
 
             double distance = MAX_LABEL_COST_;
 
@@ -1873,6 +1896,20 @@ public:
       return 0;
     }
 
+    for (int l = 0; l < g_link_vector.size(); l++)
+    { 
+        if (link_type_code.size() > 0 && g_link_vector[l].link_type_code.size() > 0)
+        {
+            string s1 = link_type_code;
+            string s2 = g_link_vector[l].link_type_code;
+            if (s1.find(s2) == std::string::npos)  // s1 is not contained in s1
+                {
+                m_link_generalised_cost_array[l] = MAX_LABEL_COST_/100.0;
+                }
+        }
+    }
+
+
     cout << "origin_node_id =" << g_node_vector[origin_node_no].node_id << "; "
       << "destination_node_id =" << g_node_vector[destination_node_no].node_id << endl;
 
@@ -1912,14 +1949,6 @@ public:
 
         link_sqe_no = g_node_vector[from_node].m_outgoing_link_seq_no_vector[i];
         to_node = g_link_vector[link_sqe_no].to_node_seq_no;
-
-        if (link_type_code.size() > 0 && g_link_vector[link_sqe_no].link_type_code.size() > 0)
-        {
-            if (link_type_code.compare(g_link_vector[link_sqe_no].link_type_code) != 0)  // not the same link type, skip
-            {
-                continue;
-            }
-        }
 
         //remark: the more complicated implementation can be found in paper Shortest Path Algorithms In Transportation Models: Classical and Innovative Aspects
         //	A note on least time path computation considering delays and prohibitions for intersection movements
@@ -2857,6 +2886,9 @@ void g_ReadTraceCSVFile()
             if (gps_parser.GetValueByFieldName("agent_id", agent_id) == false)
                 continue;
 
+            string agent_name;
+            gps_parser.GetValueByFieldName("agent_name", agent_name);
+
             //if (origin_node_no == -1 || destination_node_no == -1)
 
             if (g_internal_agent_no_map.find(agent_id) == g_internal_agent_no_map.end())
@@ -3169,7 +3201,7 @@ void g_OutputRouteCSVFile()
   }
   else
   {
-    fprintf(g_pFileLinkRoute, "agent_id,from_node_id,to_node_id,link_id,trace_no,trace_id,distance,link_type_code,geometry\n");
+    fprintf(g_pFileLinkRoute, "agent_id,given_link_type_code,road_sequence,from_node_id,to_node_id,link_id,trace_no,trace_id,distance,link_type_code,geometry\n");
 
     for (int a = 0; a < g_agent_vector.size(); a++)
     {
@@ -3183,7 +3215,7 @@ void g_OutputRouteCSVFile()
       for (int i = 0; i < p_agent->m_node_size - 2; i++)
       {
           int link_no = g_node_vector[p_agent->path_node_vector[i]].m_outgoing_link_seq_no_map[p_agent->path_node_vector[i + 1]];
-          fprintf(g_pFileLinkRoute, "%s,", p_agent->agent_id.c_str());
+          fprintf(g_pFileLinkRoute, "%s,%s,%d,", p_agent->agent_id.c_str(), p_agent->link_type_code.c_str(), i+1);
           fprintf(g_pFileLinkRoute, "%d,%d,%d,", g_link_vector[link_no].from_node_id, g_link_vector[link_no].to_node_id, g_link_vector[link_no].link_id);
         // timestamp
           int trace_no = p_agent->likely_trace_no_vector[i];
