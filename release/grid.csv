@@ -1,2 +1,0 @@
-cell_id,x_index,y_index,zone_id,origin_flag,destination_flag,dwell_flag,n_GPS_points,n_nodes,x_coord,y_coord,geometry,
--2238999332,0,0,123,-1,-1,0,53,998,-111.950005,33.450002,"LINESTRING (-111.950005 33.450002,-111.900005 33.450002,-111.900005 33.400002,-111.950005 33.400002,-111.950005 33.450002,)"
