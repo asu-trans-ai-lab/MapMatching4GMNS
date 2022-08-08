@@ -15,6 +15,7 @@ template <typename T>
 
 #pragma warning(disable: 4244)  // stop warning: "conversion from 'int' to 'float', possible loss of data"
 
+
 string NumberToString(T Number)
 {
 	ostringstream ss;
@@ -30,6 +31,8 @@ T StringToNumber(const string &Text)
 	T result;
 	return ss >> result ? result : 0;
 }
+
+extern void g_Program_stop();
 class CCSVParser
 {
 public:
@@ -253,10 +256,15 @@ public:
 		return SeperatedStrings;
 	}
 	
-	template <class T> bool GetValueByFieldName(string field_name, T& value, bool NonnegativeFlag = true)
+	template <class T> bool GetValueByFieldName(string field_name, T& value, bool required_field = false, bool NonnegativeFlag = true)
 	{
 		if (FieldsIndices.find(field_name) == FieldsIndices.end())
 		{
+			if (required_field)
+			{
+				cout << "Field " << field_name << " in file " << field_name.c_str() << " does not exist. Please check the file." << std::endl;
+				g_Program_stop();
+			}
 			return false;
 		}
 		else

@@ -52,6 +52,12 @@ formats.
 
 ![](media/5fdd74e09597da19d58779b8aaa7fc60.png)
 
+Please note that, for mapping applications such as mapping sensor TMC corridors
+to the planning network, mapping bus lines to the highway driving network, the
+fields of hh, mm, ss are not needed. But we need to specify the origin node
+(identified by the first coordinate point) clearly so that the most likely path
+algorithm can be correctly performed.
+
 **Output file description**
 
 >   **File route.csv** describes the most-likely path for each agent based on
