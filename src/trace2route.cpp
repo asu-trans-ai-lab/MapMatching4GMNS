@@ -1515,6 +1515,7 @@ public:
                                         &g_link_vector[l].m_PointVector[ls], &g_link_vector[l].m_PointVector[ls + 1]))
                                 {
                                     g_link_vector[l].hit_count += 1;
+                                    g_link_vector[l].likely_trace_no = m_GridMatrix[x_i][y_i].m_GPSPointVector[g].trace_no;
                                     bHitCount = true;
                                     break;
                                 }
@@ -1534,8 +1535,18 @@ public:
                             if (g_agent_vector[agent_no].m_GPSPointVector.size() >= 2 && p < g_link_vector[l].m_PointVector.size() - 1 &&
                                 (g != m_GridMatrix[x_i][y_i].m_GPSPointVector.size() - 1)) // boundary points)
                             {
-                                distance_to = g_GetPoint2Point_Distance(&m_GridMatrix[x_i][y_i].m_GPSPointVector[g + 1].pt, &g_link_vector[l].m_PointVector[p + 1]);
+                                distance_to = g_GetPoint2Point_Distance(&m_GridMatrix[x_i][y_i].m_GPSPointVector[g + 1].pt, &g_link_vector[l].m_PointVector[p + 1]);\
+                            
+                                    if (distance_to < m_link_generalised_cost_array[l])  // for static case
+                                    {
+                                        m_link_generalised_cost_array[l] = distance_to; // use this distance as the likelihood cost
+                                        m_link_matching_trace_no_array[l] = m_GridMatrix[x_i][y_i].m_GPSPointVector[g].trace_no;
+
+                                    }
+                            
                             }
+
+
 
                             // we do not need to detect ill conditionning here, as the link in the cell , and the GPS trace information is all we have.
                             // distance from is the distance from GPS point g to from node of link
@@ -2745,7 +2756,7 @@ void g_ReadInputData()
       parser_link.GetValueByFieldName("lanes", link.lanes);
 
       parser_link.GetValueByFieldName("VDF_fftt1", link.FFTT_in_min);
-      parser_link.GetValueByFieldName("link_type_code", link.link_type_code);
+      parser_link.GetValueByFieldName("link_type", link.link_type_code);
       parser_link.GetValueByFieldName("link_type_name", link.link_type_name);
       
       
@@ -3062,10 +3073,6 @@ bool g_ReadTraceCSVFile()
 
             }
 
-            if (g_agent_vector.size() == 0)
-                return false;
-            else
-                return true;
 
         }
         
@@ -3074,6 +3081,8 @@ bool g_ReadTraceCSVFile()
         {
 
             fprintf(g_pFileLog, "agent index %s, GPS point size = %d \n", g_agent_vector[a_i].agent_id.c_str(), g_agent_vector[a_i].m_GPSPointVector.size());
+            printf("agent index %s, GPS point size = %d \n", g_agent_vector[a_i].agent_id.c_str(), g_agent_vector[a_i].m_GPSPointVector.size());
+
         }
 
 
@@ -3132,7 +3141,7 @@ bool g_ReadSensorCSVFile()
             if (g_internal_agent_no_map.find(agent_id) == g_internal_agent_no_map.end())
             {
 
-                g_internal_agent_no_map[agent_id] = g_internal_agent_no_map.size(); // assign the internal agent no as the current size of the map.
+                g_internal_agent_no_map[agent_id] = g_agent_vector.size(); // assign the internal agent no as the current size of the map.
                 CAgent agent;
                 agent.agent_id = agent_id;
                 agent.agent_no = g_agent_vector.size();
@@ -3542,7 +3551,7 @@ void g_OutputRouteCSVFile()
   }
   else
   {
-    fprintf(g_pFileLinkRoute, "agent_id,given_link_type_code,road_sequence,from_node_id,to_node_id,link_id,trace_no,trace_id,length,distance,link_type_code,geometry\n");
+    fprintf(g_pFileLinkRoute, "agent_id,given_link_type,road_sequence,from_node_id,to_node_id,link_id,trace_no,trace_id,length,distance,link_typ,geometry\n");
 
     for (int a = 0; a < g_agent_vector.size(); a++)
     {
@@ -3791,11 +3800,8 @@ int main(int argc)
   g_ReadInputData();
 
 
-  if(g_ReadInputAgentCSVFile()==false)
-  {
-      if (g_ReadTraceCSVFile() == false)
+    if (g_ReadTraceCSVFile() == false)
           g_ReadSensorCSVFile();
-  }
 
 
 
