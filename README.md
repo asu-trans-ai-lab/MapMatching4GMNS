@@ -4,6 +4,13 @@
 either, or **both**, because two engines agreeing is a quality signal. Map matching becomes a QC
 step, not just preprocessing.
 
+<p align="center">
+  <img src="docs/img/matched_route_vs_trace.png" width="720" alt="A noisy GPS trace (white points) matched to a connected route (orange) on the road network"><br/>
+  <em>Input: a noisy GPS <strong>trace</strong> (white). Output: the most-likely connected <strong>route</strong> (orange) on the GMNS network.</em>
+</p>
+
+**New here? Jump to the [🚀 Guided tour](#guided-tour--demos) for a 3-minute run.**
+
 > Questions / suggestions: [xzhou74@asu.edu](mailto:xzhou74@asu.edu). The original walkthrough is
 > in [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb); example data is under `datasets/`.
 > The classic single-engine user guide is preserved below (sections 1–5).
@@ -17,6 +24,31 @@ step, not just preprocessing.
 
 Median cross-engine link agreement on freeway corridors: **Jaccard ≈ 0.86** — trust the match
 where they agree, flag it where they disagree.
+
+## How it works
+
+Every source becomes one **standard evidence**, both engines match it, and their **agreement**
+drives a graded verdict and an optional human review — the same path for GPS, connected-vehicle,
+TMC, GTFS, or LRS:
+
+```mermaid
+flowchart LR
+    A["Evidence<br/>GPS · CV · TMC · GTFS · LRS"] --> B["Standard trace"]
+    B --> C1["Engine 1 · trace2route<br/>connected path"]
+    B --> C2["Engine 2 · geometric<br/>link set + milepost"]
+    C1 --> D{"Agreement<br/>(Jaccard)"}
+    C2 --> D
+    D --> E["Trusted path"]
+    E --> F["Verification<br/>graded verdict"]
+    F --> G["GUI review<br/>dashboard.html"]
+    G --> H["apply-review<br/>reviewed_route.csv"]
+    NET[("GMNS network")] --> C1
+    NET --> C2
+    style C1 fill:#fff7ed,stroke:#c2843b
+    style C2 fill:#fff7ed,stroke:#c2843b
+    style D fill:#eef2ff,stroke:#4338ca
+    style E fill:#e6fffa,stroke:#2c7a7b
+```
 
 ## Install & quickstart
 
@@ -56,6 +88,71 @@ Ownership boundary: **evidence adapter + route matching + match verification + v
 it does not judge which network is globally "best" (that is `qaqc4gmns`). Six cases all run in CI
 through the **same adapter + verification contract** — synthetic GPS · I-95 trip/CV · TMC · GTFS ·
 LRS — each with a self-contained synthetic fixture. See `docs/SELF_DEMO.md`.
+
+## Guided tour & demos
+
+**3-minute run — no data, no native build (Engine 2 works out of the box):**
+
+```bash
+pip install -e .
+mapmatching4gmns self-demo --all        # runs all 6 cases; writes case_output/ + dashboard.html
+```
+
+Open any `examples/self_demo/<case>/case_output/dashboard.html` — a self-contained page (no
+internet) with toggleable **raw trace / HMM / geometric / trusted** layers and the graded verdict.
+
+The six demo cases are a ladder — each new source type is just a new adapter behind the **same
+verification contract**, not a one-off script:
+
+```mermaid
+flowchart TD
+    subgraph LADDER["examples/self_demo/ · one adapter + verification contract"]
+      direction LR
+      c0["0 · synthetic<br/>GPS + ramp"] --> c1["1 · I-95<br/>trip + CV"] --> c2["2 · TMC<br/>corridor"] --> c3["3 · GTFS<br/>bus route"] --> c4["4 · LRS<br/>route + events"]
+    end
+    LADDER --> V["Graded verdict<br/>PASS · REVIEW_REQUIRED · FAIL"]
+    style LADDER fill:#f8fafc,stroke:#94a3b8
+    style V fill:#e6fffa,stroke:#2c7a7b
+```
+
+**Human-in-the-loop review** (`apply-review`) turns a reviewer's decision into a corrected route —
+without editing the GMNS network:
+
+```mermaid
+flowchart LR
+    R["match_review.csv<br/>(OPEN)"] --> DEC{"reviewer_decision"}
+    DEC -->|"ACCEPT_TRUSTED / HMM / GEOMETRIC"| OK["accept that engine's path"]
+    DEC -->|"REPLACE_PATH"| CHK["validate links vs network"]
+    DEC -->|"INSUFFICIENT_EVIDENCE"| FLAG["flag for more data"]
+    OK --> OUT["reviewed_route.csv"]
+    CHK --> OUT
+    style OUT fill:#e6fffa,stroke:#2c7a7b
+```
+
+### Where to look
+
+| Try this | Path / command |
+|---|---|
+| Fully-open corridor + TMC demo | [`examples/synthetic/`](examples/synthetic/) |
+| Run the whole ladder | `mapmatching4gmns self-demo --all` |
+| One case + dashboard | `mapmatching4gmns self-demo --case gtfs` → `examples/self_demo/03_gtfs/case_output/dashboard.html` |
+| Apply a review | `mapmatching4gmns apply-review case_output/ --network network` |
+| Interactive visualization portal | open [`examples/portals/i95_va/datahub.html`](examples/portals/i95_va/) (deck.gl) or `gmns.kml` in Google Earth |
+| Classic single-engine walkthrough | [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb) |
+| The QA method / datasets / ecosystem | [`docs/SELF_DEMO.md`](docs/SELF_DEMO.md) · [`docs/DUAL_ENGINE.md`](docs/DUAL_ENGINE.md) · [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) |
+
+<table>
+<tr>
+<td width="50%" align="center">
+  <img src="docs/img/gmns_network_trace_qgis.png" alt="GMNS network (nodes/links) and GPS trace points over a freeway interchange in QGIS"><br/>
+  <em>GMNS network + GPS trace in QGIS — the matcher's inputs.</em>
+</td>
+<td width="50%" align="center">
+  <img src="docs/img/i95_portal_preview.png" alt="I-95 links colored by observed speed in the deck.gl portal"><br/>
+  <em>The bundled I-95 portal (<code>examples/portals/i95_va/</code>) — links by observed speed.</em>
+</td>
+</tr>
+</table>
 
 ## Build the native engine (Engine 1)
 
