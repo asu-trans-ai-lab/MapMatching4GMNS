@@ -1,0 +1,4 @@
+stop_id,stop_name,stop_lon,stop_lat
+ST1,Main & 1st,-111.900,33.4000
+ST2,Main & 3rd,-111.880,33.4000
+ST3,Main & 5th,-111.860,33.4000

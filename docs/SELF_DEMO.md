@@ -41,8 +41,8 @@ rather than a forced pass.
 | 0 | **synthetic golden** | GPS trace + a competing frontage + ramp | **implemented, runs in CI** |
 | 1 | **I-95 trip / connected-vehicle** | trip-path + CV | **implemented (public fixture in CI; real data local-only)** |
 | 2 | **TMC → GMNS corridor** | `TMC_Identification.csv` | **implemented, runs in CI** |
-| 3 | GTFS → road GMNS | shapes / stops | adapter stub (`adapters/gtfs.py`) |
-| 4 | LRS → GMNS | route events + measures | adapter stub (`adapters/lrs.py`) |
+| 3 | **GTFS → road GMNS** | route `shapes.txt` | **implemented, runs in CI** |
+| 4 | **LRS → GMNS** | route centerline + `events.csv` | **implemented, runs in CI** |
 
 Case 0 is the smallest fully-bundled test (`examples/self_demo/00_synthetic/`): parallel
 directional facilities, a ramp, a competing-but-incorrect path, a noisy trace, and string link
@@ -101,11 +101,45 @@ MIT-licensed [USDOT JPO CodeHub Data Cleaning and Fusion Tool](https://github.co
 network from that portal's `network.geojson`. Any genuinely restricted feed stays in a gitignored
 `local_data/`; nothing proprietary is committed.
 
+## Case 3 — GTFS → road GMNS (implemented)
+
+`examples/self_demo/03_gtfs/` (arterial corridor + a parallel local-street distractor + a synthetic
+GTFS feed). `adapters/gtfs.py` takes the route's representative **shape** (`shapes.txt`) as the
+ordered corridor evidence; with `gp_types: ['3']` the matcher snaps the bus route onto the arterial
+and ignores the parallel local street (transit-on-roads matching). Verifies connected path +
+expected-route agreement + baseline.
+
+## Case 4 — LRS → GMNS (implemented)
+
+`examples/self_demo/04_lrs/` (freeway corridor + frontage distractor + a linear-referenced route).
+`adapters/lrs.py` turns the route centerline (`route.csv`: `route_id, measure, x_coord, y_coord`)
+into corridor evidence, and `project_events` maps each event range in `events.csv`
+(`begin_measure`–`end_measure`, e.g. speed-limit / lane changes) onto the matched links →
+`lrs_event_crosswalk.csv`. Verifies connected path, expected-route agreement, and
+`lrs_event_coverage` (every event lands on ≥1 link).
+
+## Datasets
+
+Every case ships a **synthetic, self-contained public fixture** under `examples/self_demo/` so the
+whole ladder runs in CI with no external download or licensed data. Each adapter also consumes the
+corresponding **real** source:
+
+| case | bundled fixture | real source it targets |
+|---|---|---|
+| 0 synthetic | hand-built GPS trace | any GPS/GNSS trajectory |
+| 1 I-95 | sanitized trip + CV points | USDOT JPO CodeHub *Data Cleaning & Fusion Tool* synthesized I-95 output (MIT; portal in `examples/portals/i95_va/`); real INRIX/RITIS/VDOT probe feeds stay local-only |
+| 2 TMC | 5-TMC `TMC_Identification.csv` | INRIX/RITIS TMC network (licensed → local-only) |
+| 3 GTFS | synthetic 1-route feed | any open GTFS feed (GTFS is an open spec; feeds via the Mobility Database / transit.land are generally openly licensed) |
+| 4 LRS | synthetic route + events | state DOT roadway inventory / LRS — e.g. ADOT AllRoads / ATIS LRS (AZGeo open data) or FHWA HPMS route-and-measure |
+
+Licensed/agency source **records** are never committed — only adapters, schemas, and synthetic
+fixtures. Anything restricted stays in a gitignored `local_data/`.
+
 ## Roadmap
 
 M1 harness + synthetic + CI **(done)** → M2 TMC **(done)** → M3 I-95 trip + CV **(done)** → M4 GUI
-review contract + `apply-review` **(done)** → M5 GTFS → M6 LRS. New cases plug into the **same
-adapter + verification contract**, not one-off notebooks.
+review contract + `apply-review` **(done)** → M5 GTFS **(done)** → M6 LRS **(done)**. All six cases
+plug into the **same adapter + verification contract** — not one-off notebooks — and run in CI.
 
 ## Restricted data
 

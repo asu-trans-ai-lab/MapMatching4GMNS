@@ -1,0 +1,8 @@
+case_id: gtfs
+case_type: gtfs
+route_id: BUS1
+direction: AB
+gp_types: ['3']
+expected_connected_path: true
+expected_route_links: [3001AB, 3002AB, 3003AB, 3004AB]
+minimum_geometric_expected_jaccard: 0.80

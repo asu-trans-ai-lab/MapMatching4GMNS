@@ -1,0 +1,4 @@
+event_id,route_id,begin_measure,end_measure,attribute,value
+E1,SR-DEMO,0.00,1.15,speed_limit,65
+E2,SR-DEMO,1.15,2.31,speed_limit,55
+E3,SR-DEMO,0.00,2.31,lanes,3

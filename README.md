@@ -53,9 +53,9 @@ Each case also writes a `match_review.csv` review contract; a reviewer records a
 regenerates a corrected route **without editing the GMNS network**. See `docs/SELF_DEMO.md`.
 
 Ownership boundary: **evidence adapter + route matching + match verification + visual review** —
-it does not judge which network is globally "best" (that is `qaqc4gmns`). Cases: 0 synthetic
-(done), then TMC · I-95 trip/CV · GTFS · LRS through the same adapter + verification contract.
-See `docs/SELF_DEMO.md`.
+it does not judge which network is globally "best" (that is `qaqc4gmns`). Six cases all run in CI
+through the **same adapter + verification contract** — synthetic GPS · I-95 trip/CV · TMC · GTFS ·
+LRS — each with a self-contained synthetic fixture. See `docs/SELF_DEMO.md`.
 
 ## Build the native engine (Engine 1)
 

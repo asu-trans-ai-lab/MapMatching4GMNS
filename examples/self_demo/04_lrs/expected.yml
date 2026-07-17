@@ -1,0 +1,9 @@
+case_id: lrs
+case_type: lrs
+route_id: SR-DEMO
+direction: AB
+gp_types: ['1']
+expected_connected_path: true
+expected_route_links: [4001AB, 4002AB, 4003AB, 4004AB]
+minimum_geometric_expected_jaccard: 0.80
+minimum_lrs_event_coverage: 1.0

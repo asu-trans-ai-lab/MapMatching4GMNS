@@ -19,7 +19,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CASES = {"synthetic": ("00_synthetic", "expected.yml"),
          "i95_trip": ("01_i95", "expected.yml"),
          "i95_cv": ("01_i95", "expected_cv.yml"),
-         "tmc": ("02_tmc", "expected.yml")}
+         "tmc": ("02_tmc", "expected.yml"),
+         "gtfs": ("03_gtfs", "expected.yml"),
+         "lrs": ("04_lrs", "expected.yml")}
 
 
 def _load_yml(path):
@@ -121,7 +123,7 @@ def _tmc_outputs(out, sidecar, case_dir, cfg, topo, trusted):
 def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
     import pandas as pd
     from . import adapters, engine_hmm_internal as eh, verify_match, gui_export
-    from .adapters import tmc as tmc_adapter, i95 as i95_adapter
+    from .adapters import tmc as tmc_adapter, i95 as i95_adapter, gtfs as gtfs_adapter, lrs as lrs_adapter
     from .mapmatch_corridor_to_gmns import match_corridor
     subdir, yml = CASES[case_id]
     case_dir = os.path.join(repo_root, "examples", "self_demo", subdir)
@@ -147,6 +149,14 @@ def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
         raw_cv = pd.read_csv(os.path.join(case_dir, "cv.csv"))
         trace = i95_adapter.clean_cv(raw_cv)                 # dedup + drop stationary
         ev = i95_adapter.cv_to_evidence(raw_cv, direction=cfg.get("direction", "AB"), corridor_id=case_id)
+    elif ctype == "gtfs":
+        ev = gtfs_adapter.to_evidence(os.path.join(case_dir, "gtfs"), route_id=cfg.get("route_id"),
+                                      direction=cfg.get("direction", "AB"), corridor_id=case_id)
+        trace = ev.reference_points.rename(columns={"longitude": "x_coord", "latitude": "y_coord"})
+    elif ctype == "lrs":
+        ev = lrs_adapter.to_evidence(os.path.join(case_dir, "route.csv"),
+                                     direction=cfg.get("direction", "AB"), corridor_id=case_id)
+        trace = ev.reference_points.rename(columns={"longitude": "x_coord", "latitude": "y_coord"})
     else:
         raise NotImplementedError(f"case_type {ctype}: use the {ctype} adapter (stub)")
     trace.to_csv(os.path.join(out, "normalized_trace.csv"), index=False)
@@ -221,6 +231,19 @@ def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
             ver["failures"] = ver.get("failures", []) + ["thinning_unstable"]; ver["verdict"] = "FAIL"
         elif stab < 0.85 and ver["verdict"] == "PASS":
             ver["warnings"] = ver.get("warnings", []) + ["thinning_marginal"]; ver["verdict"] = "REVIEW_REQUIRED"
+
+    # --- LRS event projection (lrs): map event measure-ranges onto matched links ---
+    if ctype == "lrs":
+        events = lrs_adapter.read_events(os.path.join(case_dir, "events.csv"))
+        proj = lrs_adapter.project_events(events, sidecar)
+        with open(os.path.join(out, "lrs_event_crosswalk.csv"), "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["event_id", "attribute", "value", "begin_measure",
+                                              "end_measure", "link_ids", "n_links", "covered"])
+            w.writeheader(); w.writerows(proj)
+        cov = sum(1 for p in proj if p["covered"]) / len(proj) if proj else 1.0
+        ver["checks"]["lrs_event_coverage"] = round(cov, 3)
+        if cov < cfg.get("minimum_lrs_event_coverage", 0):
+            ver["failures"] = ver.get("failures", []) + ["low_lrs_event_coverage"]; ver["verdict"] = "FAIL"
 
     # --- baseline self-validation (2nd run): trusted vs expected_route.csv ---
     baseline_note = None

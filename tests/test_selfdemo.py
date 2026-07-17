@@ -43,6 +43,22 @@ def test_i95_cv_self_demo_pass():
     assert s["verification"]["checks"]["thinning_stability"] >= 0.6
 
 
+def test_gtfs_self_demo_pass():
+    s = run_case("gtfs", ROOT)
+    assert s["verdict"] in ("PASS", "PASS_WITH_ENGINE_DISAGREEMENT"), s
+    assert s["verification"]["checks"]["connected_path"] is True
+    assert s["verification"]["checks"]["geometric_expected_jaccard"] >= 0.80
+    assert s["baseline"]["matches_baseline"] is True
+
+
+def test_lrs_self_demo_pass():
+    s = run_case("lrs", ROOT)
+    assert s["verdict"] in ("PASS", "PASS_WITH_ENGINE_DISAGREEMENT"), s
+    assert s["verification"]["checks"]["connected_path"] is True
+    assert s["verification"]["checks"]["lrs_event_coverage"] == 1.0
+    assert s["baseline"]["matches_baseline"] is True
+
+
 # --- Milestone 4: GUI review contract + apply-review ---
 NET = os.path.join(ROOT, "examples", "self_demo", "00_synthetic")
 
