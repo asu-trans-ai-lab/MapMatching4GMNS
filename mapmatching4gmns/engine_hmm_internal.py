@@ -1,8 +1,13 @@
-"""Engine 1 -- internal HMM / Markov-chain map matcher (MapMatching4GMNS, C++ trace2route).
+"""Engine 1 -- internal native map matcher (MapMatching4GMNS, C++ trace2route).
+
+Algorithm: a most-likely **connected-path** search (time-geographic least-generalized-cost path;
+Tang et al. 2015) -- NOT a Hidden Markov Model. The module name and the `hmm` engine keyword are
+legacy labels kept for back-compat; prefer "native".
 
 Wraps Zhou's MapMatching4GMNS engine: the compiled `trace2route.exe` (C++) finds the
 most-likely path (node sequence) through a GMNS network given a GPS/point trace. (Distinct
-from Yajun's `mapmatcher4gmns` PyPI package, wrapped separately in mapmatcher4gmns_adapter.)
+from Yajun Liu's `mapmatcher4gmns` PyPI package -- a *separate* HMM matcher, TrackIt/GoTrackIt
+lineage, wrapped separately in mapmatcher4gmns_adapter.)
 It is the stronger engine and is INTERNAL -- imported/located only when the executable is available,
 via `CORRIDOR2GMNS_TRACE2ROUTE` env var or an explicit `exe_path`. The open-source package
 still works without it (engine_gmns is the always-available fallback).

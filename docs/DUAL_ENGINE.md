@@ -6,11 +6,18 @@ agreement — the comparator never sees engine internals, only the schema.
 
 ## The two engines
 
-- **Engine 1 — HMM / native (`trace2route`, Zhou).** Most-likely **connected path** from origin
-  to destination, guided by the trace. Returns a routable link sequence — the right input for
-  assignment / OD. Slower (loads the network), and needs the corridor inside its clip.
+- **Engine 1 — native (`trace2route`, Zhou).** A most-likely **connected path** from origin to
+  destination, guided by the trace (time-geographic least-cost path; Tang et al. 2015 — **not** a
+  Hidden Markov Model). Returns a routable link sequence — the right input for assignment / OD.
+  Slower (loads the network), and needs the corridor inside its clip. Keyword `engine="native"`
+  (legacy alias `"hmm"`; the `hmm_*` output columns below are Engine 1's, same legacy label).
 - **Engine 2 — geometric.** Projects the corridor centerline onto nearby links (buffer + heading
   + distance). Fast, full-network, returns a link set with **per-link milepost**. Can have gaps.
+
+> These are the two engines *inside* this package. A distinct **third** option — Yajun Liu's
+> `mapmatcher4gmns` (a real HMM matcher, TrackIt/GoTrackIt lineage) — can be driven via
+> `mapmatcher4gmns_adapter`, but that path is currently gated pending upstream fixes. Don't confuse
+> `mapmatcher4gmns` (Yajun) with `mapmatching4gmns` (this package).
 
 ## The comparison (`compare`)
 
@@ -38,7 +45,7 @@ Given two `MatchedPath`, `compare` reports:
 
 | need | engine |
 |---|---|
-| routable connected path (assignment / OD) | **hmm** |
+| routable connected path (assignment / OD) | **native** (alias `hmm`) |
 | fast attribute tagging / milepost profiles | **geometric** |
 | a trustworthy result | **both** — agreement (Jaccard ≥ 0.8) is the confidence |
 | corridor may fall outside a tight clip | **geometric** (full network) |

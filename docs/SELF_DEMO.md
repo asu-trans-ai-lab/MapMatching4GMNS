@@ -9,14 +9,19 @@ MapMatching4GMNS is **self-testing and self-demonstrating**. Its responsibility 
 ## The common pipeline (every case)
 
 ```
-evidence → standard trace → HMM match → geometric match → agreement → trusted path
-         → verification → GUI review export
+evidence → standard trace → Engine 1 (native) match → Engine 2 (geometric) match
+         → agreement → trusted path → verification → GUI review export
 ```
 
-Engine-adaptive: **geometric always runs**; **HMM runs when the native engine is built**
-(`native/build_pybind.sh`, or `trace2route.exe`), else it is skipped and noted. The second run
-self-validates against the case baseline (`expected_route.csv`); baselines are never overwritten
-without `--update-baseline --confirm-baseline-update`.
+Engine-adaptive: **Engine 2 (geometric) always runs**; **Engine 1 (native `trace2route`) runs when
+the native module is built** (`native/build_pybind.sh`, or `trace2route.exe`), else it is skipped
+and noted. The second run self-validates against the case baseline (`expected_route.csv`); baselines
+are never overwritten without `--update-baseline --confirm-baseline-update`.
+
+> **Legacy naming:** in the outputs and the review contract below, `hmm_*` (`hmm_route.csv`,
+> `hmm_link_ids`, `ACCEPT_HMM`) refers to **Engine 1 (native `trace2route`)** — a most-likely-path
+> matcher, not a Hidden Markov Model. The label is kept for back-compat. The actual HMM package is
+> the *separate* `mapmatcher4gmns` by Yajun Liu.
 
 ```bash
 python -m mapmatching4gmns.selfdemo --case synthetic     # or: mapmatching4gmns self-demo --case synthetic
@@ -54,8 +59,10 @@ cross-engine comparison, output schemas, and GUI export.
 `match_review.csv` records a reproducible human-in-the-loop history:
 `review_id, trace_id, issue_type, hmm_link_ids, geometric_link_ids, trusted_link_ids,
 review_status, reviewer_decision (ACCEPT_TRUSTED|ACCEPT_HMM|ACCEPT_GEOMETRIC|REPLACE_PATH|
-INSUFFICIENT_EVIDENCE), replacement_link_ids, review_note`. The dashboard toggles raw trace / HMM /
-geometric / trusted layers — visual review, not network editing (GUI4GMNS-aligned).
+INSUFFICIENT_EVIDENCE), replacement_link_ids, review_note`. The dashboard toggles raw trace /
+Engine 1 (native) / geometric / trusted layers — visual review, not network editing
+(GUI4GMNS-aligned). (`hmm_link_ids` / `ACCEPT_HMM` name Engine 1, native `trace2route` — see the
+legacy-naming note above.)
 
 **`apply-review` (implemented).** A reviewer fills `reviewer_decision` (and `replacement_link_ids`
 for `REPLACE_PATH`); the command applies the decisions and writes the corrected result — **without

@@ -1,9 +1,11 @@
-"""Adapter for `mapmatcher4gmns` -- the matching engine of the GMNS ecosystem.
+"""Adapter for `mapmatcher4gmns` -- an *optional third engine*.
 
-Design rule (SPEC): Corridor2GMNS should CALL mapmatcher4gmns for matching logic, not ship
-a second isolated map-matcher. This adapter is that seam. It routes a match request to an
-engine and normalizes the result into the Corridor2GMNS sidecar schema, adding a
-`matcher_engine` column so every downstream artifact records how it was matched.
+`mapmatcher4gmns` (by Yajun Liu, https://github.com/yajunliu99/mapmatcher4gmns) is a *separate*
+Hidden Markov Model matcher (TrackIt/GoTrackIt lineage) -- NOT part of this package's two engines
+(Engine 1 native `trace2route`, Engine 2 geometric). This adapter is the seam to run it as a third
+engine when a user wants the HMM path for noisy GPS/probe traces. It normalizes the result into the
+sidecar schema, adding a `matcher_engine` column so every downstream artifact records how it was
+matched. The HMM path is currently gated (see `_match_via_hmm`) pending the upstream fixes below.
 
 Honest status: `mapmatcher4gmns` 0.1.9 has 5 blocking bugs on real GMNS + modern pandas
 (documented with a reproduction kit at docs/mapmatcher4gmns_repro in the parent repo:

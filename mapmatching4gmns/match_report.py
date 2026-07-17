@@ -1,8 +1,10 @@
 """Dual-engine orchestrator + QA report.
 
 dual_match runs both engines on the same corridor evidence, compares them, resolves a
-trusted result, and returns a QA record. Engine 1 (internal HMM) is used when available;
-otherwise the run degrades gracefully to Engine 2 alone (flagged single-engine).
+trusted result, and returns a QA record. Engine 1 (native `trace2route`, most-likely path) is used
+when available; otherwise the run degrades gracefully to Engine 2 (geometric) alone (flagged
+single-engine). Note: the `engine_hmm*` keys/`prefer="engine_hmm"` are legacy names for Engine 1
+(native) — kept for back-compat; Engine 1 is not a Hidden Markov Model.
 """
 import csv
 import json
@@ -36,7 +38,7 @@ def dual_match(evidence, base_link_df, gp_types, *, network_dir=None, exe_path=N
 def format_report(rec):
     c = rec["comparison"]
     lines = [f"dual-engine match: {rec['trajectory_id']}"]
-    lines.append(f"  Engine 1 (HMM): {'ran' if rec['engine_hmm_available'] else 'unavailable -> single-engine'}")
+    lines.append(f"  Engine 1 (native trace2route): {'ran' if rec['engine_hmm_available'] else 'unavailable -> single-engine'}")
     lines.append(f"  verdict: {c['verdict'].upper()}"
                  + (f"  flags: {', '.join(c.get('flags', []))}" if c.get("flags") else ""))
     if "link_jaccard" in c:

@@ -61,7 +61,7 @@ svg{{border:1px solid #e2e8f0;background:#fff}} .trace{{fill:#3182ce;opacity:.7}
 label{{margin-right:14px}} .badge{{padding:3px 10px;border-radius:6px;color:#fff;background:{color}}}</style></head>
 <body><h2>MapMatching4GMNS self-demo — {case_id} <span class="badge">{verdict}</span></h2>
 <div><label><input type=checkbox checked onclick="t('traceL',this)">raw trace</label>
-<label><input type=checkbox checked onclick="t('hmmL',this)">HMM route</label>
+<label><input type=checkbox checked onclick="t('hmmL',this)">Engine 1 (native) route</label>
 <label><input type=checkbox checked onclick="t('geoL',this)">geometric route</label>
 <label><input type=checkbox checked onclick="t('trustL',this)">trusted route</label></div>
 <svg viewBox="0 0 {W} {H}" width="{W}" height="{H}">
@@ -69,7 +69,7 @@ label{{margin-right:14px}} .badge{{padding:3px 10px;border-radius:6px;color:#fff
 <g id="hmmL">{poly(data['hmm_route'],'hmm')}</g>
 <g id="trustL">{poly(data['trusted_route'],'trusted')}</g>
 <g id="traceL">{trace_dots}</g></svg>
-<p>trusted links: {len(routes.get('trusted') or [])} · geometric: {len(routes.get('geometric') or [])} · hmm: {len(routes.get('hmm') or []) if routes.get('hmm') is not None else 'skipped'} — review record in match_review.csv</p>
+<p>trusted links: {len(routes.get('trusted') or [])} · geometric: {len(routes.get('geometric') or [])} · engine 1 (native): {len(routes.get('hmm') or []) if routes.get('hmm') is not None else 'skipped'} — review record in match_review.csv</p>
 <script>function t(id,c){{document.getElementById(id).style.display=c.checked?'':'none'}}</script></body></html>"""
     open(os.path.join(out_dir, "dashboard.html"), "w", encoding="utf-8").write(html)
     return os.path.join(out_dir, "dashboard.html")

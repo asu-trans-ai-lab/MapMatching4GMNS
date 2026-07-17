@@ -15,15 +15,22 @@ step, not just preprocessing.
 > in [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb); example data is under `datasets/`.
 > The full **two-engine user guide** (network / evidence / file schemas / algorithms) is below.
 
-| | Engine 1 — HMM / native | Engine 2 — geometric |
+| | Engine 1 — native (`trace2route`) | Engine 2 — geometric |
 |---|---|---|
-| method | `trace2route` — most-likely **connected path** | centerline **projection** onto links |
+| method | most-likely **connected path** (time-geographic; Tang et al. 2015) | centerline **projection** onto links |
 | speed | ~0.3 s/corridor (loads network) | ~0.02 s (≈12× faster) |
 | output | routable link sequence (assignment / OD) | link set + per-link **milepost** |
 | build | C++ pybind module (`native/`) | pure Python |
+| keyword | `engine="native"` *(legacy alias: `"hmm"`)* | `engine="geometric"` |
 
 Median cross-engine link agreement on freeway corridors: **Jaccard ≈ 0.86** — trust the match
 where they agree, flag it where they disagree.
+
+> **Naming, so nobody trips on it.** Engine 1 (`trace2route`) is a *most-likely-path* matcher, **not
+> a Hidden Markov Model** — the `hmm` keyword and the `hmm_*` output columns are legacy labels for
+> Engine 1. The actual **HMM** package is [`mapmatcher4gmns`](https://github.com/yajunliu99/mapmatcher4gmns)
+> by **Yajun Liu** — a *separate* project (one letter apart: **matcher** vs **matching**) that this
+> package can optionally drive as a third engine. See [Attribution & ecosystem](#attribution--ecosystem).
 
 ## How it works
 
@@ -60,8 +67,8 @@ pip install -e .            # pandas + numpy  (add the native engine below for E
 import mapmatching4gmns as mm
 
 ev = mm.corridor_from_tmc("TMC_Identification.csv", road="I-95", direction="NORTHBOUND")
-p1 = mm.match(ev, network_dir="network", engine="hmm")        # connected path (native)
-p2 = mm.match(ev, network_dir="network", engine="geometric")  # link set + milepost
+p1 = mm.match(ev, network_dir="network", engine="native")     # Engine 1: connected path (alias "hmm")
+p2 = mm.match(ev, network_dir="network", engine="geometric")  # Engine 2: link set + milepost
 qa = mm.match(ev, network_dir="network", engine="both")        # both + agreement + verdict
 ```
 
@@ -99,7 +106,7 @@ mapmatching4gmns self-demo --all        # runs all 6 cases; writes case_output/ 
 ```
 
 Open any `examples/self_demo/<case>/case_output/dashboard.html` — a self-contained page (no
-internet) with toggleable **raw trace / HMM / geometric / trusted** layers and the graded verdict.
+internet) with toggleable **raw trace / Engine 1 (native) / geometric / trusted** layers and the graded verdict.
 
 The six demo cases are a ladder — each new source type is just a new adapter behind the **same
 verification contract**, not a one-off script:
@@ -185,14 +192,30 @@ Extras: `trace_segmenter` (recover **loop** routes that collapse as one o→d), 
 
 ## Attribution & ecosystem
 
-`trace2route` / **MapMatching4GMNS** is by **Xuesong (Simon) Zhou**. The related PyPI package
-[`mapmatcher4gmns`](https://pypi.org/project/mapmatcher4gmns/) (by Yajun) is a *separate*
-geometric/HMM matcher — `mapmatcher4gmns_adapter` can drive it as a third engine. Part of the
-[ASU Trans-AI Lab](https://github.com/asu-trans-ai-lab) GMNS toolchain; used by **Subarea2GMNS**
-to seed subarea OD (`docs/ECOSYSTEM.md`). MIT licensed.
+**This package — `mapmatching4gmns`** (Engine 1 `trace2route` + Engine 2 geometric, with
+agreement-based QA) is by **Xuesong (Simon) Zhou**. `trace2route` (Engine 1) is a most-likely-path
+matcher (time-geographic; Tang et al. 2015).
 
-*Not to be confused with `mapmatcher4gmns` — this package (`mapmatching4gmns`) integrates both the
-native trace2route and geometric engines with agreement-based QA.*
+**A separate package — `mapmatcher4gmns`** (note: *matcher*, not *matching*) by **Yajun Liu**
+([github.com/yajunliu99/mapmatcher4gmns](https://github.com/yajunliu99/mapmatcher4gmns),
+[PyPI](https://pypi.org/project/mapmatcher4gmns/)) is a **Hidden Markov Model** matcher, inspired by
+and referencing [TrackIt / GoTrackIt](https://github.com/zdsjjtTLG/TrackIt) (TangKai et al.,
+Hangzhou Zecheng Data Technology). It is a distinct project — not an engine of this one.
+
+| | `mapmatching4gmns` (this) | `mapmatcher4gmns` (Yajun Liu) |
+|---|---|---|
+| what | dual-engine matcher + agreement QA | single HMM matcher |
+| engines | Engine 1 native `trace2route` (most-likely path) · Engine 2 geometric | HMM (TrackIt/GoTrackIt lineage) |
+| relation | can optionally call the other as a **third** engine | standalone |
+
+**Optional third engine.** `mapmatcher4gmns_adapter` is a seam to run Yajun Liu's HMM matcher as a
+third engine. That HMM path is **currently gated** (the wrapper raises `NotImplementedError`)
+pending upstream fixes tracked in the adapter — Engine 2 (geometric) is the always-available
+default and Engine 1 (native) the primary alternative. Don't confuse the two package names: they
+differ by one word (**matcher** vs **matching**) and cover different algorithms.
+
+Part of the [ASU Trans-AI Lab](https://github.com/asu-trans-ai-lab) GMNS toolchain; used by
+**Subarea2GMNS** to seed subarea OD (`docs/ECOSYSTEM.md`). MIT licensed.
 
 ---
 
@@ -217,7 +240,7 @@ Modeling Network Specification (<https://github.com/zephyr-data-specs/GMNS>).
 
 ```python
 import mapmatching4gmns as mm
-p1 = mm.match(ev, network_dir="network", engine="hmm")        # Engine 1: connected path
+p1 = mm.match(ev, network_dir="network", engine="native")     # Engine 1: connected path (alias "hmm")
 p2 = mm.match(ev, network_dir="network", engine="geometric")  # Engine 2: link set + milepost
 qa = mm.match(ev, network_dir="network", engine="both")        # both + agreement + verdict
 ```

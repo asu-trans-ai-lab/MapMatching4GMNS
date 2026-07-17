@@ -37,8 +37,9 @@ flowchart LR
 | package | role | relation |
 |---|---|---|
 | **mapmatching4gmns** (this) | dual-engine map matching + QA | the matcher |
-| MapMatching4GMNS (`trace2route`) | Zhou's C++ engine | **integrated here as Engine 1** |
-| mapmatcher4gmns (PyPI, Yajun) | separate geometric/HMM matcher | optional 3rd engine via adapter |
+| `trace2route` (Zhou) | C++ most-likely-path engine (time-geographic, not HMM) | **integrated here as Engine 1 (native)** |
+| geometric (built-in) | centerline projection | **Engine 2** |
+| `mapmatcher4gmns` (Yajun Liu) | *separate* **HMM** matcher (TrackIt/GoTrackIt lineage) | optional 3rd engine via adapter (currently gated) |
 | corridor2gmns | corridor evidence → GMNS | upstream evidence + consumer |
 | Subarea2GMNS | corridor → subarea + OD | **downstream: uses this to seed OD** |
 | osm2gmns / TAPLite / DTALite | network / assignment | network in, assignment downstream |

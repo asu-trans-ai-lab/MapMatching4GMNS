@@ -9,5 +9,6 @@ p = mm.match_from_tmc("examples/synthetic/TMC_Identification.csv", "SR-DEMO", "E
 print(p.matched_link_sequence)     # links along the corridor
 ```
 
-The **geometric** engine runs with just pandas/numpy. The **hmm** engine additionally needs the
-native module built from `native/` (see the top-level README).
+Engine 2 (**geometric**) runs with just pandas/numpy. Engine 1 (**native** `trace2route`, keyword
+`engine="native"`, legacy alias `"hmm"`) additionally needs the native module built from `native/`
+(see the top-level README).
