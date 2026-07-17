@@ -1,0 +1,5 @@
+﻿tmc,road,direction,intersection,state,county,start_latitude,start_longitude,end_latitude,end_longitude,miles,road_order
+T1,SR-DEMO,EASTBOUND,,.AZ,Maricopa,33.45,-112.1,33.45,-112.08,1.15,1
+T2,SR-DEMO,EASTBOUND,,.AZ,Maricopa,33.45,-112.08,33.45,-112.06,1.15,2
+T3,SR-DEMO,EASTBOUND,,.AZ,Maricopa,33.45,-112.06,33.45,-112.04,1.15,3
+T4,SR-DEMO,EASTBOUND,,.AZ,Maricopa,33.45,-112.04,33.45,-112.02,1.15,4

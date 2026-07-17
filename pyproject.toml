@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mapmatching4gmns"
+version = "0.2.0"
+description = "Dual-engine map matching for GMNS: trace2route (native most-likely path) + geometric, with agreement-based QA."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "ASU Trans-AI Lab" }]
+keywords = ["gmns", "map-matching", "trace2route", "tmc", "gps", "trajectory", "traffic"]
+dependencies = ["pandas>=1.5", "numpy>=1.20"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pybind11"]
+
+[project.urls]
+Homepage = "https://github.com/asu-trans-ai-lab/mapmatching4gmns"
+
+[tool.setuptools.packages.find]
+include = ["mapmatching4gmns*"]

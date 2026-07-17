@@ -15,7 +15,10 @@
 #include <fstream>
 #include <iostream>
 #include <list>
-//#include <omp.h>
+#ifdef _OPENMP
+#include <omp.h>          // only pulled in when the build passes -fopenmp
+#endif
+#include <cstdlib>        // getenv for CORRIDOR2GMNS_MM_THREADS
 //#include <time.h>
 #include "CSVParser.h"
 #include <ctime>
@@ -60,7 +63,10 @@ using std::min;
 //std::map<string, int> g_internal_agent_no_map;
 
 map<int, int> g_internal_node_seq_no_map;
-map<int, int> g_internal_link_no_map;
+// keyed by the FULL GMNS link_id string (e.g. "193912AB" / "193912BA"), not the int core:
+// the two directions of a physical link share the same numeric core, so an int key made
+// AB and BA collide (one overwrote the other). String keys keep them distinct internally.
+map<string, int> g_internal_link_no_map;
 map<string, int> g_internal_agent_no_map;
 map<int, string> g_internal_trace_no_2_trace_id_map;
 
@@ -77,7 +83,7 @@ void g_Program_stop()
 {
 
   cout << "Program stops. Press any key to terminate. Thanks!" << endl;
-  getchar();
+  // getchar(); // removed for library/CI use
   exit(0);
 };
 
@@ -529,6 +535,7 @@ public:
   }
 
   int link_id;
+  string link_id_str;   // full GMNS link_id incl. AB/BA direction suffix (int link_id drops it)
   __int64 cell_id;
   string name;
   string osm_way_id;
@@ -892,8 +899,26 @@ class NetworkForSP // mainly for shortest path calculation
 {
 public:
     NetworkForSP()
+        : m_GridMatrix(nullptr),
+          m_alloc_nodes(0), m_alloc_links(0),
+          m_SENodeList(nullptr), m_node_status_array(nullptr),
+          m_label_time_array(nullptr), m_label_distance_array(nullptr),
+          m_node_predecessor(nullptr), m_link_predecessor(nullptr),
+          m_node_label_cost(nullptr), m_link_flow_volume_array(nullptr),
+          m_link_generalised_cost_array(nullptr), m_link_matching_trace_no_array(nullptr),
+          temp_path_node_vector(nullptr), temp_path_cost_vector(nullptr),
+          m_TD_link_generalised_cost_array(nullptr), m_TD_link_GPS_point_array(nullptr),
+          m_TD_link_GPS_hit_array(nullptr), m_TD_node_label_cost(nullptr),
+          m_TD_node_predecessor(nullptr), m_TD_link_predecessor(nullptr),
+          m_TD_time_predecessor(nullptr)
     {
     }
+
+    // row counts actually allocated for the 2D TD_* arrays -- the destructor must free the
+    // SAME number of rows it allocated (link arrays: m_alloc_links rows; node arrays:
+    // m_alloc_nodes rows). Freeing g_TimeRangeInterval rows instead leaked every extra row.
+    int m_alloc_nodes;
+    int m_alloc_links;
 
     GridNodeSet** m_GridMatrix; //important data structure for creating grid matrix
     double m_left;              // boundary of grid matrix
@@ -1313,9 +1338,9 @@ public:
 
     void output_TD_label_cost()
     {
-        for (int l = 0; l < g_link_vector.size(); l++) // 
+        for (int l = 0; l < g_link_vector.size(); l++) //
         {
-            if (g_link_vector[l].likelihood_distance < 998)
+            if (m_link_generalised_cost_array[l] < 998)   // this network's own likelihood (was global mirror)
             {
                 for (int t = 0; t < g_TimeRangeInterval; t++)
                 {
@@ -1342,7 +1367,9 @@ public:
 
         for (int i = 0; i < g_link_vector.size(); i++) // reset the cost for all links
         {
-           g_link_vector[i].likely_trace_no = -1;
+           // per-network only (m_link_matching_trace_no_array). The old global
+           // g_link_vector[i].likely_trace_no mirror was removed so parallel threads never
+           // share this marker -- see g_LikelyRouteFinding()/FINAL_QA_REPORT T4.
            m_link_matching_trace_no_array[i] = -1;
         }
 
@@ -1438,7 +1465,7 @@ public:
             }
         }
 
-        g_agent_vector[agent_no].avg_GPS_segment_distance = total_GPS_distance / max(1, g_agent_vector[agent_no].m_GPSPointVector.size() - 1);
+        g_agent_vector[agent_no].avg_GPS_segment_distance = total_GPS_distance / max((size_t)1, g_agent_vector[agent_no].m_GPSPointVector.size() - 1);
 
         IdentifyNetworkONode(agent_no);
         IdentifyNetworkDNode(agent_no);
@@ -1641,13 +1668,11 @@ public:
                 }
             }
 
-        for (int i = 0; i < g_link_vector.size(); i++) // reset the cost for all links
-        {
-            g_link_vector[i].likelihood_distance = m_link_generalised_cost_array[i];
-
-            g_link_vector[i].likely_trace_no = m_link_matching_trace_no_array[i];
-
-        }
+        // NOTE: previously this mirrored the per-network arrays into the SHARED global
+        // g_link_vector (likelihood_distance + likely_trace_no), which is a data race under
+        // OpenMP. Both consumers are per-network or diagnostic and now read the per-network
+        // arrays directly (output_TD_label_cost, g_OutputLinklikelihoodCSVFile), so the mirror
+        // is gone and the per-agent path uses m_link_matching_trace_no_array directly.
 
 
 
@@ -1788,6 +1813,8 @@ public:
   // major function 1:  allocate memory and initialize the data
   void AllocateMemory(int number_of_nodes, int number_of_links)
   {
+    m_alloc_nodes = number_of_nodes;   // remember exact row counts for the destructor
+    m_alloc_links = number_of_links;
 
     m_SENodeList = new int[number_of_nodes]; //1
 
@@ -1860,27 +1887,30 @@ public:
     if (m_GridMatrix)
       Deallocate2DDynamicArray<GridNodeSet>(m_GridMatrix, MAX_GRID_SIZE_);
 
+    // Each TD_* array was allocated with rows = number_of_links (link arrays) or
+    // number_of_nodes (node arrays), NOT g_TimeRangeInterval (that is the COLUMN count).
+    // Free the same number of rows that were allocated, or the extra rows leak every run.
     if (m_TD_link_generalised_cost_array)
-        Deallocate2DDynamicArray<double>(m_TD_link_generalised_cost_array, g_TimeRangeInterval);
+        Deallocate2DDynamicArray<double>(m_TD_link_generalised_cost_array, m_alloc_links);
 
     if (m_TD_link_GPS_point_array)
-        Deallocate2DDynamicArray<int>(m_TD_link_GPS_point_array, g_TimeRangeInterval);
+        Deallocate2DDynamicArray<int>(m_TD_link_GPS_point_array, m_alloc_links);
 
     if (m_TD_link_GPS_hit_array)
-        Deallocate2DDynamicArray<int>(m_TD_link_GPS_hit_array, g_TimeRangeInterval);
-    
+        Deallocate2DDynamicArray<int>(m_TD_link_GPS_hit_array, m_alloc_links);
+
 
     if (m_TD_node_label_cost)
-         Deallocate2DDynamicArray<double>(m_TD_node_label_cost, g_TimeRangeInterval);
+         Deallocate2DDynamicArray<double>(m_TD_node_label_cost, m_alloc_nodes);
 
     if (m_TD_node_predecessor)
-        Deallocate2DDynamicArray<int>(m_TD_node_predecessor, g_TimeRangeInterval);
+        Deallocate2DDynamicArray<int>(m_TD_node_predecessor, m_alloc_nodes);
 
     if (m_TD_link_predecessor)
-        Deallocate2DDynamicArray<int>(m_TD_link_predecessor, g_TimeRangeInterval);
+        Deallocate2DDynamicArray<int>(m_TD_link_predecessor, m_alloc_nodes);
 
     if (m_TD_time_predecessor)
-        Deallocate2DDynamicArray<int>(m_TD_time_predecessor, g_TimeRangeInterval);
+        Deallocate2DDynamicArray<int>(m_TD_time_predecessor, m_alloc_nodes);
   }
 
   // SEList: scan eligible List implementation: the reason for not using STL-like template is to avoid overhead associated pointer allocation/deallocation
@@ -2208,7 +2238,7 @@ public:
                   int min_FFTT_in_interval = max(1, g_link_vector[link].FFTT_in_min / g_TimeResolution_inMin* over_speed_limit_ratio +0.5);
                   int FFTT_in_interval = max(1, g_link_vector[link].FFTT_in_min / g_TimeResolution_inMin + 0.5);
                   int stage_size = 10;
-                  int max_TT_in_interval = max(1, max(max_TT_Dwell_time_in_int, FFTT_in_interval * stage_size));
+                  int max_TT_in_interval = max(1, max(max_TT_Dwell_time_in_int, (int)(FFTT_in_interval * stage_size)));
                   int step_size = 1;
 
                   for (int travel_time_in_interval = min_FFTT_in_interval; travel_time_in_interval < max_TT_in_interval; travel_time_in_interval += step_size) //++1 might give more precise travel time
@@ -2402,12 +2432,14 @@ public:
           int link_no = g_node_vector[p_agent->path_node_vector[i]].m_outgoing_link_seq_no_map[p_agent->path_node_vector[i + 1]];
 
 
-          p_agent->likely_trace_no_vector.push_back(g_link_vector[link_no].likely_trace_no);
+          // read the matched trace marker from THIS network's own array (was the shared
+          // global g_link_vector[link_no].likely_trace_no) -- thread-safe per NetworkForSP.
+          p_agent->likely_trace_no_vector.push_back(m_link_matching_trace_no_array[link_no]);
       }
 
       for (int link = 0; link < g_link_vector.size(); link++)
       {
-          g_link_vector[link].likely_trace_no = -1;
+          m_link_matching_trace_no_array[link] = -1;   // reset this network's markers only
       }
     }
   }
@@ -2759,6 +2791,9 @@ void g_ReadInputData()
 
       if (parser_link.GetValueByFieldName("link_id", link.link_id) == false)
         continue;
+      // also keep the FULL link_id string (preserves 'AB'/'BA'); the int above is the
+      // numeric prefix used for internal indexing, the string is echoed in route.csv.
+      parser_link.GetValueByFieldName("link_id", link.link_id_str);
       if (parser_link.GetValueByFieldName("from_node_id", link.from_node_id) == false)
         continue;
       if (parser_link.GetValueByFieldName("to_node_id", link.to_node_id) == false)
@@ -2833,7 +2868,12 @@ void g_ReadInputData()
 
       link.link_seq_no = g_number_of_links++;
 
-      g_internal_link_no_map[link.link_id] = link.link_seq_no;
+      // key by the full string id so AB/BA never collide; fall back to the int core as text
+      // when a link.csv provides no string link_id.
+      {
+        string lkey = link.link_id_str.size() > 0 ? link.link_id_str : std::to_string(link.link_id);
+        g_internal_link_no_map[lkey] = link.link_seq_no;
+      }
       g_node_vector[link.from_node_seq_no].m_outgoing_link_seq_no_vector.push_back(link.link_seq_no);
       g_node_vector[link.from_node_seq_no].m_outgoing_link_seq_no_map[link.to_node_seq_no] = link.link_seq_no;
       g_link_vector.push_back(link);
@@ -3237,9 +3277,7 @@ void g_OutputAgentCSVFile()
           fprintf(g_pFileAgent, ",,,");
 
 
-      p_agent->distance += 
-
-      fprintf(g_pFileAgent, "%s,");
+      fprintf(g_pFileAgent, ",");  // FIX: was argument-less %s (garbage -> crash on g++) + erroneous distance +=
 
 
         fprintf(g_pFileAgent, "\"LINESTRING (");
@@ -3333,7 +3371,12 @@ void g_OutputRouteCSVFile()
       {
           int link_no = g_node_vector[p_agent->path_node_vector[i]].m_outgoing_link_seq_no_map[p_agent->path_node_vector[i + 1]];
           fprintf(g_pFileLinkRoute, "%s,%s,%d,", p_agent->agent_id.c_str(), p_agent->allowed_link_type_code.c_str(), i+1);
-          fprintf(g_pFileLinkRoute, "%d,%d,%d,", g_link_vector[link_no].from_node_id, g_link_vector[link_no].to_node_id, g_link_vector[link_no].link_id);
+          // link_id emitted as the FULL string (keeps AB/BA); falls back to the int if the
+          // string column was absent.
+          if (g_link_vector[link_no].link_id_str.size() > 0)
+            fprintf(g_pFileLinkRoute, "%d,%d,%s,", g_link_vector[link_no].from_node_id, g_link_vector[link_no].to_node_id, g_link_vector[link_no].link_id_str.c_str());
+          else
+            fprintf(g_pFileLinkRoute, "%d,%d,%d,", g_link_vector[link_no].from_node_id, g_link_vector[link_no].to_node_id, g_link_vector[link_no].link_id);
         // timestamp
           int trace_no = p_agent->likely_trace_no_vector[i];
           fprintf(g_pFileLinkRoute, "%d,", trace_no);
@@ -3375,14 +3418,21 @@ void g_OutputLinklikelihoodCSVFile()
     {
         fprintf(g_pFileLinkRoute, "from_node_id,to_node_id,cell_id,FFTT_in_sec,distance,o_distance,d_distance,accessbility_time,hit_count,use_count,balance,geometry\n");
 
+        // per-link likelihood now lives on each NetworkForSP (no shared global mirror). This
+        // diagnostic reports network 0's last-agent likelihood as a representative (race-free:
+        // written only by that network's sequential agents, read here after the parallel join).
+        const double* likelihood = (g_pNetworkVector != nullptr)
+            ? g_pNetworkVector[0].m_link_generalised_cost_array : nullptr;
+
         for (int a = 0; a < g_link_vector.size(); a++)
         {
-            if(g_link_vector[a].likelihood_distance<998)
-            { 
+            double lk = likelihood ? likelihood[a] : 999999.0;
+            if(lk<998)
+            {
             int from_node_id = g_link_vector[a].from_node_id;
             int to_node_id = g_link_vector[a].to_node_id;;
             fprintf(g_pFileLinkRoute, "%d,%d,%jd,%d,%f,%f,%f,%d,%d,%d,%f,%f,", from_node_id, to_node_id, g_link_vector[a].cell_id, g_link_vector[a].FFTT_in_sec,
-                g_link_vector[a].likelihood_distance, g_link_vector[a].o_distance, g_link_vector[a].d_distance, g_link_vector[a].AccessibilityTime,
+                lk, g_link_vector[a].o_distance, g_link_vector[a].d_distance, g_link_vector[a].AccessibilityTime,
                 
                 g_link_vector[a].hit_count, g_link_vector[a].use_count,g_link_vector[a].balance
             );
@@ -3492,80 +3542,142 @@ void g_OutputTDRouteCSVFile()
  
 }
 
+// Thread count for the agent matching loop. Opt-in and safe by default:
+//   * default 1 (serial, byte-identical to the original behavior);
+//   * override with env CORRIDOR2GMNS_MM_THREADS (clamped to g_max_number_of_threads, and to
+//     omp_get_max_threads() when built with OpenMP);
+//   * without -fopenmp the loop is serial regardless, so this only ever caps to 1 there.
+int g_mm_num_threads()
+{
+  int n = 1;
+  const char* env = std::getenv("CORRIDOR2GMNS_MM_THREADS");
+  if (env != nullptr)
+  {
+    int req = atoi(env);
+    if (req > 1) n = req;
+  }
+  if (n > g_max_number_of_threads) n = g_max_number_of_threads;
+#ifdef _OPENMP
+  int cap = omp_get_max_threads();
+  if (n > cap) n = cap;
+#else
+  n = 1;   // no OpenMP compiled in -> the parallel-for is serial anyway
+#endif
+  if (n < 1) n = 1;
+  return n;
+}
+
 bool g_LikelyRouteFinding()
 {
-  //int number_of_threads = g_number_of_CPU_threads();
-  int number_of_threads = 1;
-  g_pNetworkVector = new NetworkForSP[number_of_threads]; // create n copies of network, each for a subset of agents to use
+  // Parallel-ready: each NetworkForSP is a private per-thread copy (its own grid, label,
+  // predecessor and matching-trace arrays), and the per-link match markers now live on those
+  // per-network arrays (m_link_matching_trace_no_array / m_link_generalised_cost_array) -- no
+  // shared g_link_vector write remains in the path finder. Thread count is env-driven and
+  // defaults to 1 (identical to the original serial behavior). See FINAL_QA_REPORT.md T4.
+  int number_of_threads = g_mm_num_threads();
+  g_pNetworkVector = new NetworkForSP[number_of_threads]; // n copies, each matches a subset of agents
 
   cout << "number of CPU threads = " << number_of_threads << endl;
-
-  NetworkForSP* p_Network;
 
   for (int i = 0; i < number_of_threads; i++)
   {
     g_pNetworkVector[i].AllocateMemory(g_number_of_nodes, g_number_of_links);
-    g_pNetworkVector[i].BuildGridSystem(); // called once
+    g_pNetworkVector[i].BuildGridSystem(); // called once per network copy
   }
 
-  for (int a = 0; a < g_agent_vector.size(); a++) //
+  // round-robin agents to threads -> each network gets a DISJOINT agent subset
+  for (int a = 0; a < g_agent_vector.size(); a++)
+    g_pNetworkVector[a % number_of_threads].m_agent_vector.push_back(a);
+
+  if (g_time_dependent_computing_mode == 0)
   {
-
-    p_Network = &g_pNetworkVector[a % number_of_threads];
-
-    p_Network->m_agent_vector.push_back(a);
-  }
-
-  //#pragma omp parallel for
-  for (int thread_no = 0; thread_no < number_of_threads; thread_no++)
-  {
-      if (g_time_dependent_computing_mode == 0)
-      {
-          g_OutputCell2ZoneCSVFile();
+      // PARALLEL region: pure path-finding, each thread on its own network + agent subset.
+      // No shared mutable state is written here, so this is race-free.
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+      for (int thread_no = 0; thread_no < number_of_threads; thread_no++)
           g_pNetworkVector[thread_no].find_path_for_agents_assigned_for_this_thread();
+
+      // SERIAL outputs after the join (these iterate the global agent/link vectors and write
+      // shared files -- must NOT run inside the parallel region).
+      g_OutputCell2ZoneCSVFile();
+      for (int thread_no = 0; thread_no < number_of_threads; thread_no++)
           g_pNetworkVector[thread_no].output_grid_file();
-          g_OutputAgentCSVFile();
-          g_OutputRouteCSVFile();
-      }
-      if (g_time_dependent_computing_mode == 1)
-      {
+      g_OutputAgentCSVFile();
+      g_OutputRouteCSVFile();
+  }
+  if (g_time_dependent_computing_mode == 1)
+  {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+      for (int thread_no = 0; thread_no < number_of_threads; thread_no++)
           g_pNetworkVector[thread_no].find_TD_path_for_agents_assigned_for_this_thread();
-          fprintf(g_pFileLog, "output agent.csv\n");
-          g_OutputAgentCSVFile();
-          fprintf(g_pFileLog, "output route.csv\n");
-          g_OutputTDRouteCSVFile();
 
-      }
-
+      fprintf(g_pFileLog, "output agent.csv\n");
+      g_OutputAgentCSVFile();
+      fprintf(g_pFileLog, "output route.csv\n");
+      g_OutputTDRouteCSVFile();
   }
 
-  cout << "End of Sequential Optimization Process. " << endl;
+  cout << "End of Optimization Process. " << endl;
   fprintf(g_pFileLog, "end of optimization process\n");
   return true;
 }
-int main(int argc)
-//void MapMatching4GMNS(int mode)
+// Phase 2: controlled memory -- clear ALL per-run global state so one process can match
+// many corridors cleanly (no state bleed, no leak of the network/grid arrays). Safe to call
+// before every run and at teardown.
+void mm_reset_state()
 {
+  // free the shortest-path network array (was leaked every run -- never delete[]d before).
+  // delete[] invokes ~NetworkForSP() per element, which frees the 1D label/status arrays,
+  // m_GridMatrix, and all m_TD_* 2D arrays. The TD arrays are now freed with their true
+  // row counts (m_alloc_links / m_alloc_nodes) -- previously freed with g_TimeRangeInterval,
+  // which leaked (rows - g_TimeRangeInterval) row-arrays per run (~2 MB on a corridor subarea).
+  if (g_pNetworkVector != nullptr)
+  {
+    delete[] g_pNetworkVector;
+    g_pNetworkVector = nullptr;
+  }
+  g_node_vector.clear();
+  g_link_vector.clear();
+  g_agent_vector.clear();
+  g_internal_node_seq_no_map.clear();
+  g_internal_link_no_map.clear();
+  g_internal_agent_no_map.clear();
+  g_internal_trace_no_2_trace_id_map.clear();
+  g_cell_id_2_zone_id_map.clear();
+  g_cell_id_2_node_map.clear();
+  g_number_of_nodes = 0;
+  g_number_of_links = 0;
+  g_number_of_agents = 0;
+  g_grid_size = 1;
+  g_StartTimeinMin = 999999;
+  g_EndTimeinMin = 0;
+  if (g_pFileLog != nullptr)
+  {
+    fclose(g_pFileLog);
+    g_pFileLog = nullptr;
+  }
+}
+
+// One full match run from the current working directory. Reusable: resets state first,
+// returns instead of exit()/getchar() so a host (pybind11, CLI, or a batch loop) can call
+// it repeatedly in a single process. Returns 0 on success, non-zero on error.
+int mm_run_once()
+{
+  mm_reset_state();
   clock_t start_t, end_t, total_t;
   g_pFileLog = fopen("log.txt", "w");
-
   if (g_pFileLog == NULL)
   {
-      cout << "File log.txt cannot be opened." << endl;
-      g_Program_stop();
-
+    cout << "File log.txt cannot be opened." << endl;
+    return 1;
   }
 
   g_ReadInputData();
-
   g_ReadTraceCSVFile();
-  //if(g_ReadInputAgentCSVFile()==false)
-  //{
-
-
-  //}
-
-
 
   start_t = clock();
   g_LikelyRouteFinding();
@@ -3574,17 +3686,23 @@ int main(int argc)
   g_OutputLinklikelihoodCSVFile();
   end_t = clock();
   total_t = (end_t - start_t);
-  cout << "CPU Running Time = " << total_t / 1000.0 << " seconds"  << "for " << g_agent_vector.size() << "traces with avg cup time = " << total_t / 1000.0/max(1, g_agent_vector.size()) << " sec/trace" << endl;
-  cout << "free memory.." << endl;
+  cout << "CPU Running Time = " << total_t / 1000.0 << " seconds" << "for " << g_agent_vector.size() << "traces with avg cup time = " << total_t / 1000.0 / max((size_t)1, g_agent_vector.size()) << " sec/trace" << endl;
   cout << "done." << endl;
 
-  g_node_vector.clear();
-  g_link_vector.clear();
-  g_agent_vector.clear();
-
-  fclose(g_pFileLog);
-  getchar();
-  exit(0);
-  //return 1;
+  mm_reset_state();   // free everything (controlled teardown after each run)
+  return 0;
 }
+
+#ifndef MM_PYBIND   // when built as a Python extension there is no main()
+int main(int argc, char** argv)
+{
+  // --selftest-twice runs two matches in one process to prove controlled memory (no state
+  // bleed / crash across runs).
+  int runs = (argc > 1 && std::string(argv[1]) == "--selftest-twice") ? 2 : 1;
+  int rc = 0;
+  for (int i = 0; i < runs; i++)
+    rc = mm_run_once();
+  return rc;
+}
+#endif
 

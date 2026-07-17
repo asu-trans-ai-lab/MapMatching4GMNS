@@ -1,10 +1,84 @@
 # MapMatching4GMNS
 
-Please send your comments to [xzhou74@asu.edu](mailto:xzhou74@asu.edu) if you have any suggestions and questions.
+**Dual-engine map matching for GMNS.** Two independent matchers under one Python API — run
+either, or **both**, because two engines agreeing is a quality signal. Map matching becomes a QC
+step, not just preprocessing.
 
-A work-in-progress user guide can be found at
+> Questions / suggestions: [xzhou74@asu.edu](mailto:xzhou74@asu.edu). The original walkthrough is
+> in [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb); example data is under `datasets/`.
+> The classic single-engine user guide is preserved below (sections 1–5).
 
-[User Guide of Trace2Route_v3 - Google Docs](https://docs.google.com/document/d/1ZfUZ3OkZtNu9zwarQUN8XfnSBc8LvDT9HkMFgq9_jds/edit)
+| | Engine 1 — HMM / native | Engine 2 — geometric |
+|---|---|---|
+| method | `trace2route` — most-likely **connected path** | centerline **projection** onto links |
+| speed | ~0.3 s/corridor (loads network) | ~0.02 s (≈12× faster) |
+| output | routable link sequence (assignment / OD) | link set + per-link **milepost** |
+| build | C++ pybind module (`native/`) | pure Python |
+
+Median cross-engine link agreement on freeway corridors: **Jaccard ≈ 0.86** — trust the match
+where they agree, flag it where they disagree.
+
+## Install & quickstart
+
+```bash
+pip install -e .            # pandas + numpy  (add the native engine below for Engine 1)
+```
+
+```python
+import mapmatching4gmns as mm
+
+ev = mm.corridor_from_tmc("TMC_Identification.csv", road="I-95", direction="NORTHBOUND")
+p1 = mm.match(ev, network_dir="network", engine="hmm")        # connected path (native)
+p2 = mm.match(ev, network_dir="network", engine="geometric")  # link set + milepost
+qa = mm.match(ev, network_dir="network", engine="both")        # both + agreement + verdict
+```
+
+`engine="both"` returns a QA record: the two paths, their link Jaccard, direction / milepost /
+gateway checks, and a resolved trusted path. Run the fully-open demo in `examples/synthetic/`.
+
+## Build the native engine (Engine 1)
+
+The most-likely-path matcher is a portable C++ pybind module in `native/` (also buildable as the
+classic Visual Studio project via `native/trace2route.sln` / `CMakeLists.txt`):
+
+```bash
+cd native
+bash build_pybind.sh              # -> mapmatching4gmns_engine.<ext>
+MM_OPENMP=1 bash build_pybind.sh  # optional: parallel batch matching
+```
+
+Then `export MAPMATCHING4GMNS_ENGINE_DIR=/path/to/native`. Without it, Engine 1 falls back to a
+`trace2route.exe` if present; Engine 2 always works. See `native/PORTABILITY_NOTES.md`.
+
+**This release hardens `trace2route`**: portable build (MFC-free), in-process pybind module,
+memory-leak fix (TD-array deallocation), `link_id` preserved as a string (`AB`/`BA` direction
+suffix), and opt-in OpenMP for parallel batch matching.
+
+## What's in the box
+
+- `mapmatching4gmns/` — Python package (both engines + `compare`/`dual_match` QA + schema)
+- `native/` — the C++ `trace2route` engine (portable pybind + VS project + CMake)
+- `docs/` — `DUAL_ENGINE.md` (the QA method), `ECOSYSTEM.md`
+- `examples/synthetic/` — a fully-open corridor + TMC demo
+- `datasets/`, `MapMatching4GMNS.ipynb`, `media/`, `release/` — original data & walkthrough
+
+Extras: `trace_segmenter` (recover **loop** routes that collapse as one o→d), `mm_metrics`
+(coverage ratio — unit-robust; raw link count is not comparable across networks), `gtfs2trace`.
+
+## Attribution & ecosystem
+
+`trace2route` / **MapMatching4GMNS** is by **Xuesong (Simon) Zhou**. The related PyPI package
+[`mapmatcher4gmns`](https://pypi.org/project/mapmatcher4gmns/) (by Yajun) is a *separate*
+geometric/HMM matcher — `mapmatcher4gmns_adapter` can drive it as a third engine. Part of the
+[ASU Trans-AI Lab](https://github.com/asu-trans-ai-lab) GMNS toolchain; used by **Subarea2GMNS**
+to seed subarea OD (`docs/ECOSYSTEM.md`). MIT licensed.
+
+*Not to be confused with `mapmatcher4gmns` — this package (`mapmatching4gmns`) integrates both the
+native trace2route and geometric engines with agreement-based QA.*
+
+---
+
+# Classic user guide (single-engine trace2route)
 
 ## 1. Introduction
 
@@ -20,79 +94,39 @@ GMNS: General Modeling Network Specification (GMNS) (<https://github.com/zephyr-
 | Location sequence data input | trace.csv          | GPS traces downloaded from OpenStreetMap, e.g., using the script at <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/get_gps_trace.py> | QGIS                                                                                                             |
 | Map-matched output           | route.csv          |                                                                                                                                                                 | QGIS                                                                                                             |
 
-**Windows Executable: trace2route.exe** can be found from
-
-<https://github.com/asu-trans-ai-lab/MapMatching4GMNS/tree/master/release>
+**Windows Executable: trace2route.exe** can be found from <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/tree/master/release>
 
 ## 3. File description
 
->   **File node.csv** gives essential node information of the underlying network in GMNS format, including node_id, x_coord and y_coord.
-
-![](media/22d8257ea35209b83eefefa4eec814c0.png)
+**File node.csv** gives essential node information of the underlying network in GMNS format, including node_id, x_coord and y_coord.
 
 **File link.csv** should include essential link information of the underlying (subarea) network, including from_node_id, to_node_id, length and geometry.
 
-![](media/1da34b49eeacb8a53bd98896d6e5953e.png)
+**Input trace file:** the agent ID (as a string) corresponds to the GPS trace ID. Ensure x_coord and y_coord match the network coordinates in node.csv/link.csv. Fields o_node_id and d_node_id establish a clear starting and ending point for the most-likely-route search. Fields hh, mm, ss correspond to the GPS timestamp (separate columns to avoid time-format confusion). For mapping TMC corridors or bus lines to a network, hh/mm/ss are not needed, but the origin node (first coordinate point) must be specified.
 
-**Input trace file** as
-
-The agent ID (as a string) correspond to the GPS trace ID. Please ensure that x_coord and y_coord match the network coordinates as defined in node.csv and link.csv. Including fields o_node_id and d_node_id is essential to establish a clear starting and ending point within the network, facilitating accurate path searches for the most likely route.
-
-![A screenshot of a table Description automatically generated](media/5d98e8ab46a2aca617f926a7cdcaa989.png)
-
-Fields hh mm and ss correspond the hour, minute and second for the related GPS timestamp. We use separate columns directly to avoid confusion caused by different time coding formats.
-
-![](media/5fdd74e09597da19d58779b8aaa7fc60.png)
-
-Please note that, for mapping applications such as mapping sensor TMC corridors to the planning network, mapping bus lines to the highway driving network, the fields of hh, mm, ss are not needed. But we need to specify the origin node (identified by the first coordinate point) clearly so that the most likely path algorithm can be correctly performed.
-
-**Output file description**
-
->   **File route.csv** describes the most-likely path for each agent based on input trajectories.
-
-![](media/fbc4d80da3096a50ccd22e8d396b689c.png)
+**Output file route.csv** describes the most-likely path for each agent based on input trajectories.
 
 ## 4. Visualization
 
-### Step 1: Load GMNS files in QGIS
-
-Install and open QGIS and click on menu Layer-\>Add-\>Add Delimited Text Layer. In the following dialogue box, load GMNS node.csv and link.csv, and ensure  
-“point coordinates” is selected as geometry definition for node.csv wit x_coord and y_coord for “Geometry field”, and WKT is selected as geometry definition for link.csv.
-
-![](media/3e5f92dd1b7d253cde1e9f627a6962ce.png)
-
-![](media/d38aebb8269ae232b9ea5a684558eced.png)
-
-### Step 2: Load XYZ Tiles in QGIS with background maps
-
-Find XYZ Tiles and double-click OpenStreetMap on Browser panel. Please move the background layer to the bottom to show the GMNS network.
-
-Refence: <https://gis.stackexchange.com/questions/20191/adding-basemaps-from-google-or-bing-in-qgis>
-
-### Step 3. Visualize input trace and output route files in QGIS
-
-The 'geometry' field can be obtained from link.csv file. Then open this file in the same way as above. (Menu Layer-\>Add-\>Add Delimited Text Layer)
-
-![](media/4442e2534b75cc10507d353a26516509.png)
-
-![](media/a83fb77f142a7b676f7c9f3f80953d0b.png)
-
-![](media/bee94517db0f70b722b56c6fa93f2cfe.png)
+Load the GMNS `node.csv`/`link.csv`, input trace, and output `route.csv` in **QGIS**
+(Layer → Add → Add Delimited Text Layer; point geometry for nodes, WKT for links), with an
+OpenStreetMap XYZ-tiles background. See `media/` for step screenshots.
 
 ## 5. Algorithm
 
-1.  **Read standard GMNS network files** node and link files, **Read GPS trace.csv** file
-2.  Note: the TRACE2ROUTE program will convert trace.csv to input_agent.csv for visualization in NeXTA.
-3.  **Construct 2d grid system** to speed up the indexing of GSP points to the network. For example, a 10x10 grid for a network of 100 K nodes could lead to 1K nodes in each cell.
-4.  **Identify the related subarea** for the traversed cells by each GPS trace, so only a small subset of the network will be loaded in the resulting shortest path algorithm.
-5.  **Identify the origin and destination** nodes in the grid for each GPS trace, in case, the GPS trace does not start from or end at a node inside the network (in this case, the boundary origin and destination nodes will be identified). The OD node identification is important to run the following shortest path algorithm.
-6.  **Estimate link cost** to calculate a generalized weight/cost for each link in the cell, that is, the distance from nearly GPS points to a link inside the cell.
-7.  Use **likely path finding algorithm** selects the least cost path with the smallest generalized cumulative cost from the beginning to the end of the GPS trace.
-8.  **Identify matched timestamps** of each node in the likely path
-9.  **Output route.csv** with **estimated link travel time and delay** based on free-flow travel time of each link along the GPS matched routes
+1. Read GMNS network (node/link) and the GPS `trace.csv`.
+2. trace2route converts `trace.csv` to `input_agent.csv` for NeXTA visualization.
+3. Construct a 2D grid to speed up indexing of GPS points to the network.
+4. Identify the traversed subarea per trace, so only a small subset of the network is loaded in the shortest-path step.
+5. Identify origin/destination nodes in the grid per trace (boundary O/D if the trace starts/ends outside a node).
+6. Estimate link cost = distance from nearby GPS points to each link in the cell.
+7. Likely-path finding: least generalized-cost path from the trace start to end.
+8. Identify matched timestamps of each node along the likely path.
+9. Output `route.csv` with estimated link travel time and delay (free-flow based).
 
 ## Reference
 
-This code is implemented partially based on a published paper in Transportation Research Part C:
-
-Tang J, Song Y, Miller HJ, Zhou X (2015) “Estimating the most likely space–time paths, dwell times and path uncertainties from vehicle trajectory data: A time geographic method,” *Transportation Research Part C*, <http://dx.doi.org/10.1016/j.trc.2015.08.014>
+Implemented partially based on: Tang J, Song Y, Miller HJ, Zhou X (2015), "Estimating the most
+likely space–time paths, dwell times and path uncertainties from vehicle trajectory data: A time
+geographic method," *Transportation Research Part C*,
+<http://dx.doi.org/10.1016/j.trc.2015.08.014>
