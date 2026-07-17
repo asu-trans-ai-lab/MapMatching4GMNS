@@ -13,7 +13,7 @@ step, not just preprocessing.
 
 > Questions / suggestions: [xzhou74@asu.edu](mailto:xzhou74@asu.edu). The original walkthrough is
 > in [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb); example data is under `datasets/`.
-> The classic single-engine user guide is preserved below (sections 1–5).
+> The full **two-engine user guide** (network / evidence / file schemas / algorithms) is below.
 
 | | Engine 1 — HMM / native | Engine 2 — geometric |
 |---|---|---|
@@ -196,55 +196,106 @@ native trace2route and geometric engines with agreement-based QA.*
 
 ---
 
-# Classic user guide (single-engine trace2route)
+# User guide (two engines)
 
 ## 1. Introduction
 
-Based on input network and given GPS trajectory data, the map-matching program of MapMatching4GMNS (trace2route.exe) aims to find the most likely route in terms of node sequence in the underlying network, with the following data flow chart.
+Given a GMNS network and location evidence (a GPS trace, a TMC corridor, a GTFS shape, an LRS
+route, …), MapMatching4GMNS finds the route each trajectory most likely took, using **two
+independent engines**:
 
-GMNS: General Modeling Network Specification (GMNS) (<https://github.com/zephyr-data-specs/GMNS>)
+- **Engine 1 — `trace2route` (native).** The most-likely **connected path** (node sequence) in the
+  network — a routable path suitable for assignment / OD. This is the classic engine described in
+  the sections below; run it via the in-process pybind module (`native/`) or the legacy
+  `trace2route.exe`.
+- **Engine 2 — geometric.** Centerline **projection** of the evidence onto links — a link set with
+  a per-link **milepost**. Pure Python, ~12× faster, always available.
+
+Run either, or **both**: where the two agree (link Jaccard), trust the match; where they disagree,
+flag it. That agreement check is the QA the single-engine tool could not give you. GMNS: General
+Modeling Network Specification (<https://github.com/zephyr-data-specs/GMNS>).
+
+```python
+import mapmatching4gmns as mm
+p1 = mm.match(ev, network_dir="network", engine="hmm")        # Engine 1: connected path
+p2 = mm.match(ev, network_dir="network", engine="geometric")  # Engine 2: link set + milepost
+qa = mm.match(ev, network_dir="network", engine="both")        # both + agreement + verdict
+```
 
 ## 2. Data flow
 
-|                              | **files**          | **Data Source**                                                                                                                                                 | **Visualization**                                                                                                |
-|------------------------------|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| GMNS network input           | node.csv, link.csv | [Openstreetmap](https://osm2gmns.readthedocs.io/en/latest/)                                                                                                     | [QGIS](https://www.qgis.org/en/site/), [web interface for GMNS](https://asu-trans-ai-lab.github.io/index.html#/) |
-| Location sequence data input | trace.csv          | GPS traces downloaded from OpenStreetMap, e.g., using the script at <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/master/release/get_gps_trace.py> | QGIS                                                                                                             |
-| Map-matched output           | route.csv          |                                                                                                                                                                 | QGIS                                                                                                             |
+Both engines read the **same** GMNS network and the same evidence, and each writes its own matched
+result; `engine="both"` adds the agreement/verdict record:
 
-**Windows Executable: trace2route.exe** can be found from <https://github.com/asu-trans-ai-lab/MapMatching4GMNS/tree/master/release>
+| stage | files | data source | produced by | visualization |
+|---|---|---|---|---|
+| GMNS network input | `node.csv`, `link.csv` | [osm2gmns](https://osm2gmns.readthedocs.io/) and other X2GMNS converters | — | [QGIS](https://www.qgis.org/), [GMNS web viewer](https://asu-trans-ai-lab.github.io/index.html#/), `dashboard.html` |
+| evidence input | `trace.csv` (GPS/CV) · `TMC_Identification.csv` · GTFS `shapes.txt` · LRS `route.csv` | GPS traces (e.g. [`release/get_gps_trace.py`](release/get_gps_trace.py)); INRIX/RITIS TMC; open GTFS feeds; DOT LRS | evidence **adapters** (`mapmatching4gmns/adapters/`) | QGIS |
+| Engine 1 output | `route.csv` (connected path) | — | `trace2route` (native / `.exe`) | QGIS, `dashboard.html` |
+| Engine 2 output | link set + per-link milepost | — | geometric matcher (Python) | QGIS, `dashboard.html` |
+| QA / agreement | `engine_comparison.csv`, `match_verification.csv`, `match_review.csv` | — | `engine="both"` + verification | `dashboard.html` |
+
+**Native Engine 1**: build the pybind module (`native/build_pybind.sh`) or use the legacy
+`trace2route.exe` from [`release/`](release/). **Engine 2** needs no build.
 
 ## 3. File description
 
-**File node.csv** gives essential node information of the underlying network in GMNS format, including node_id, x_coord and y_coord.
+**`node.csv`** — essential node information in GMNS format: `node_id`, `x_coord`, `y_coord`.
 
-**File link.csv** should include essential link information of the underlying (subarea) network, including from_node_id, to_node_id, length and geometry.
+**`link.csv`** — essential link information of the underlying (subarea) network: `from_node_id`,
+`to_node_id`, `link_type`, `length`/`geometry`. Both engines use `geometry` (WKT); `link_type`
+selects the matchable facility class (e.g. freeway vs. frontage vs. local). Engine 2 preserves the
+`link_id` string (the `AB`/`BA` direction suffix is kept).
 
-**Input trace file:** the agent ID (as a string) corresponds to the GPS trace ID. Ensure x_coord and y_coord match the network coordinates in node.csv/link.csv. Fields o_node_id and d_node_id establish a clear starting and ending point for the most-likely-route search. Fields hh, mm, ss correspond to the GPS timestamp (separate columns to avoid time-format confusion). For mapping TMC corridors or bus lines to a network, hh/mm/ss are not needed, but the origin node (first coordinate point) must be specified.
+**Evidence / trace input** — the agent ID (a string) is the trajectory ID; `x_coord`/`y_coord` must
+be in the same CRS as the network. **Engine 1** additionally uses `o_node_id`/`d_node_id` to fix the
+start/end of the most-likely-path search, and `hh`,`mm`,`ss` for GPS timestamps (separate columns
+avoid time-format confusion). For TMC corridors, bus shapes, or LRS routes, timestamps are not
+needed but the origin (first coordinate) must be specified. In the two-engine API you normally do
+**not** write this file by hand: an **adapter** turns each source into one standard evidence that
+both engines consume identically (see `adapters/` and `docs/SELF_DEMO.md`).
 
-**Output file route.csv** describes the most-likely path for each agent based on input trajectories.
+**Outputs** — Engine 1 `route.csv` (the most-likely connected path per agent, with free-flow link
+travel time/delay); Engine 2 the matched link set + milepost; and, for `engine="both"`, the
+cross-engine agreement and a graded verdict.
 
 ## 4. Visualization
 
-Load the GMNS `node.csv`/`link.csv`, input trace, and output `route.csv` in **QGIS**
-(Layer → Add → Add Delimited Text Layer; point geometry for nodes, WKT for links), with an
-OpenStreetMap XYZ-tiles background. See `media/` for step screenshots.
+- **In QGIS** — load `node.csv`/`link.csv`, the input trace, and each engine's route
+  (Layer → Add → Add Delimited Text Layer; point geometry for nodes, WKT for links) over an
+  OpenStreetMap XYZ-tiles background. See `media/` for step screenshots.
+- **Self-contained** — every self-demo case writes a `dashboard.html` with toggleable
+  raw-trace / Engine 1 / Engine 2 / trusted layers and the verdict (no internet needed).
+- **Interactive portal** — `examples/portals/i95_va/` (deck.gl / Google Earth / kepler).
 
-## 5. Algorithm
+## 5. Algorithms
 
-1. Read GMNS network (node/link) and the GPS `trace.csv`.
-2. trace2route converts `trace.csv` to `input_agent.csv` for NeXTA visualization.
-3. Construct a 2D grid to speed up indexing of GPS points to the network.
-4. Identify the traversed subarea per trace, so only a small subset of the network is loaded in the shortest-path step.
-5. Identify origin/destination nodes in the grid per trace (boundary O/D if the trace starts/ends outside a node).
-6. Estimate link cost = distance from nearby GPS points to each link in the cell.
-7. Likely-path finding: least generalized-cost path from the trace start to end.
-8. Identify matched timestamps of each node along the likely path.
+**Engine 1 — `trace2route` (most-likely connected path):**
+
+1. Read the GMNS network (node/link) and the evidence `trace.csv`.
+2. Convert `trace.csv` to `input_agent.csv` for NeXTA visualization.
+3. Build a 2D grid to speed up indexing of trajectory points to the network.
+4. Identify the traversed subarea per trace, so only a small subset of the network enters the
+   shortest-path step.
+5. Identify origin/destination nodes in the grid per trace (boundary O/D if the trace starts/ends
+   outside a node).
+6. Estimate link cost = distance from nearby trajectory points to each link in the cell.
+7. Least generalized-cost path from the trace start to end (the connected route).
+8. Match timestamps of each node along the likely path.
 9. Output `route.csv` with estimated link travel time and delay (free-flow based).
+
+**Engine 2 — geometric (projection):** for each evidence segment, project onto nearby links of the
+allowed facility class, order the matched links by projected milepost, and emit the link set with
+per-link mileposts. No path search — fast, and independent of Engine 1 by construction.
+
+**Agreement / QA:** compare the two link sets by Jaccard, check direction / milepost monotonicity /
+gateway traversal, resolve a **trusted** path (a connected Engine-1 path when available, else
+Engine 2), and grade the result (`PASS` · `PASS_WITH_ENGINE_DISAGREEMENT` · `REVIEW_REQUIRED` ·
+`FAIL`). See `docs/DUAL_ENGINE.md`.
 
 ## Reference
 
-Implemented partially based on: Tang J, Song Y, Miller HJ, Zhou X (2015), "Estimating the most
-likely space–time paths, dwell times and path uncertainties from vehicle trajectory data: A time
-geographic method," *Transportation Research Part C*,
+Engine 1 is implemented partially based on: Tang J, Song Y, Miller HJ, Zhou X (2015), "Estimating
+the most likely space–time paths, dwell times and path uncertainties from vehicle trajectory data:
+A time geographic method," *Transportation Research Part C*,
 <http://dx.doi.org/10.1016/j.trc.2015.08.014>
