@@ -1,0 +1,6 @@
+﻿tmc,road,direction,intersection,state,county,start_latitude,start_longitude,end_latitude,end_longitude,miles,road_order
+115N04550,I-DEMO,EASTBOUND,,AZ,Maricopa,33.45,-112.1,33.45,-112.08,1.15,1
+115N04551,I-DEMO,EASTBOUND,,AZ,Maricopa,33.45,-112.08,33.45,-112.06,1.15,2
+115N04552,I-DEMO,EASTBOUND,,AZ,Maricopa,33.45,-112.06,33.45,-112.04,1.15,3
+115N04553,I-DEMO,EASTBOUND,,AZ,Maricopa,33.45,-112.04,33.45,-112.02,1.15,4
+115N04554,I-DEMO,EASTBOUND,,AZ,Maricopa,33.45,-112.02,33.45,-112.0,1.15,5

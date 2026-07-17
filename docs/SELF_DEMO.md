@@ -40,7 +40,7 @@ rather than a forced pass.
 |---|---|---|---|
 | 0 | **synthetic golden** | GPS trace + a competing frontage + ramp | **implemented, runs in CI** |
 | 1 | I-95 trip / connected-vehicle | trip-path + CV (local, restricted data) | adapter stub (`adapters/i95.py`) |
-| 2 | TMC → GMNS corridor | `TMC_Identification.csv` | adapter ready (`adapters/tmc.py`) |
+| 2 | **TMC → GMNS corridor** | `TMC_Identification.csv` | **implemented, runs in CI** |
 | 3 | GTFS → road GMNS | shapes / stops | adapter stub (`adapters/gtfs.py`) |
 | 4 | LRS → GMNS | route events + measures | adapter stub (`adapters/lrs.py`) |
 
@@ -58,9 +58,19 @@ INSUFFICIENT_EVIDENCE), replacement_link_ids, review_note`. `mapmatching4gmns ap
 regenerates a corrected result (Milestone 4). The dashboard toggles raw trace / HMM / geometric /
 trusted layers — visual review, not network editing (GUI4GMNS-aligned).
 
+## Case 2 — TMC → GMNS corridor (implemented)
+
+`examples/self_demo/02_tmc/` (freeway corridor + 5 eastbound TMCs + a frontage distractor).
+Beyond the common outputs it writes `tmc_gmns_crosswalk.csv` (tmc_code → gmns_link_id +
+projected mileposts + direction_match + confidence), `tmc_milepost.csv`, `tmc_unmatched.csv`, and
+`tmc_verification.csv`, and verifies: **corridor continuity, direction agreement, sequence
+preservation (sᵢ₊₁ ≥ sᵢ), milepost monotonicity, gateway traversal, TMC coverage, and one-to-many
+handling** (a single TMC may legitimately map to several planning links — the relation is
+preserved, not forced 1:1).
+
 ## Roadmap
 
-M1 self-demo harness + synthetic + CI **(done)** → M2 TMC → M3 I-95 local (trip + CV) → M4 GUI
+M1 self-demo harness + synthetic + CI **(done)** → M2 TMC **(done)** → M3 I-95 local (trip + CV) → M4 GUI
 review contract → M5 GTFS → M6 LRS. New cases plug into the **same adapter + verification
 contract**, not one-off notebooks.
 

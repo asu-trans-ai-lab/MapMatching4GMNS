@@ -1,0 +1,13 @@
+case_id: tmc
+case_type: tmc
+road: I-DEMO
+direction: EASTBOUND
+expected_connected_path: true
+expected_direction: AB
+expected_route_links: [1001AB, 1002AB, 1003AB, 1004AB, 1005AB]
+required_gateways: [1, 6]
+gp_types: ['1']
+minimum_tmc_coverage: 0.90
+minimum_geometric_expected_jaccard: 0.90
+require_milepost_monotonic: true
+require_sequence_preserved: true

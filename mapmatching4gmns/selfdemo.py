@@ -15,7 +15,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CASES = {"synthetic": "examples/self_demo/00_synthetic"}   # more cases register here (TMC, i95, ...)
+CASES = {"synthetic": "examples/self_demo/00_synthetic", "tmc": "examples/self_demo/02_tmc"}
 
 
 def _load_yml(path):
@@ -49,9 +49,76 @@ def _write_links(path, links):
             w.writerow([i, l])
 
 
+def _tmc_outputs(out, sidecar, case_dir, cfg, topo, trusted):
+    """Write TMC crosswalk / milepost / unmatched + return TMC-specific checks & failures."""
+    import csv as _csv
+    rows = sidecar.to_dict("records") if sidecar is not None else []
+    # crosswalk (one row per matched link; one TMC may map to several links = one-to-many kept)
+    with open(os.path.join(out, "tmc_gmns_crosswalk.csv"), "w", newline="", encoding="utf-8") as f:
+        w = _csv.DictWriter(f, fieldnames=["tmc_code", "gmns_link_id", "sequence_no",
+            "projected_start_measure", "projected_end_measure", "direction_match",
+            "match_dist_m", "match_confidence"], extrasaction="ignore")
+        w.writeheader()
+        for i, r in enumerate(rows):
+            mpb, mpe = r.get("mp_begin"), r.get("mp_end")
+            w.writerow({"tmc_code": r.get("tmc") or r.get("matched_tmc"), "gmns_link_id": r.get("link_id"),
+                        "sequence_no": i, "projected_start_measure": mpb, "projected_end_measure": mpe,
+                        "direction_match": r.get("mp_dir") or cfg.get("direction"),
+                        "match_dist_m": round(float(r.get("match_dist_m") or 0), 1),
+                        "match_confidence": round(1 - min(1, float(r.get("match_dist_m") or 0) / 300), 3)})
+    with open(os.path.join(out, "tmc_milepost.csv"), "w", newline="", encoding="utf-8") as f:
+        w = _csv.writer(f); w.writerow(["link_id", "mp_begin", "mp_end"])
+        for r in rows:
+            w.writerow([r.get("link_id"), r.get("mp_begin"), r.get("mp_end")])
+    # unmatched TMCs (in the id file but not represented)
+    matched_tmcs = set(str(r.get("tmc") or r.get("matched_tmc") or "") for r in rows)
+    all_tmc, total_mi, matched_mi = [], 0.0, 0.0
+    for r in _csv.DictReader(open(os.path.join(case_dir, "TMC_Identification.csv"), encoding="utf-8-sig")):
+        code = str(r.get("tmc")); mi = float(r.get("miles") or 0); total_mi += mi
+        all_tmc.append(code)
+        if code in matched_tmcs:
+            matched_mi += mi
+    with open(os.path.join(out, "tmc_unmatched.csv"), "w", newline="", encoding="utf-8") as f:
+        w = _csv.writer(f); w.writerow(["tmc_code"])
+        for c in all_tmc:
+            if c not in matched_tmcs:
+                w.writerow([c])
+
+    # ---- checks ----
+    mpb = [r.get("mp_begin") for r in rows if r.get("mp_begin") is not None]
+    monotonic = all(mpb[i] <= mpb[i + 1] + 1e-6 for i in range(len(mpb) - 1))
+    coverage = matched_mi / total_mi if total_mi else 0.0
+    # gateway: the trusted route's node chain must include the required gateway nodes
+    node_chain = []
+    for l in trusted:
+        if l in topo:
+            node_chain += list(topo[l])
+    node_set = set(node_chain)
+    gateways = [str(g) for g in cfg.get("required_gateways", [])]
+    gateways_ok = all(g in node_set for g in gateways)
+    one_to_many = len(rows) > len(matched_tmcs)     # >=1 TMC mapped to multiple links
+    checks = {"milepost_monotonic": monotonic, "sequence_preserved": monotonic,
+              "tmc_coverage": round(coverage, 3), "gateways_traversed": gateways_ok,
+              "one_to_many_links": one_to_many, "matched_tmcs": len(matched_tmcs), "total_tmcs": len(all_tmc)}
+    with open(os.path.join(out, "tmc_verification.csv"), "w", newline="", encoding="utf-8") as f:
+        w = _csv.writer(f); w.writerow(["check", "value"])
+        for k, v in checks.items():
+            w.writerow([k, v])
+    fails = []
+    if cfg.get("require_milepost_monotonic") and not monotonic:
+        fails.append("milepost_not_monotonic")
+    if coverage < cfg.get("minimum_tmc_coverage", 0):
+        fails.append("low_tmc_coverage")
+    if gateways and not gateways_ok:
+        fails.append("gateway_not_traversed")
+    return checks, fails
+
+
 def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
     import pandas as pd
-    from . import adapters, engine_gmns_public as eg, engine_hmm_internal as eh, verify_match, gui_export
+    from . import adapters, engine_hmm_internal as eh, verify_match, gui_export
+    from .adapters import tmc as tmc_adapter
+    from .mapmatch_corridor_to_gmns import match_corridor
     case_dir = os.path.join(repo_root, CASES[case_id])
     cfg = _load_yml(os.path.join(case_dir, "expected.yml"))
     out = out_dir or os.path.join(case_dir, "case_output")
@@ -63,18 +130,25 @@ def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
         trace = pd.read_csv(os.path.join(case_dir, "trace.csv"))
         ev = adapters.trace_to_evidence(trace, direction=cfg.get("expected_direction", "AB"),
                                         corridor_id=case_id)
+    elif ctype == "tmc":
+        ev = tmc_adapter.to_evidence(os.path.join(case_dir, "TMC_Identification.csv"),
+                                     cfg.get("road"), cfg.get("direction"))
+        # a "trace" view for the dashboard: the ordered TMC endpoints
+        trace = ev.reference_points.rename(columns={"longitude": "x_coord", "latitude": "y_coord"})
     else:
         raise NotImplementedError(f"case_type {ctype}: use the {ctype} adapter (stub)")
     trace.to_csv(os.path.join(out, "normalized_trace.csv"), index=False)
     json.dump({"case_id": case_id, "case_type": ctype, "network": "network",
-               "n_trace_points": len(trace)}, open(os.path.join(out, "input_manifest.json"), "w"), indent=2)
+               "n_evidence_points": len(trace)}, open(os.path.join(out, "input_manifest.json"), "w"), indent=2)
 
     gp = set(cfg.get("gp_types", ["1", "2", "3"]))
     base = pd.read_csv(os.path.join(case_dir, "link.csv"), low_memory=False)
 
-    # --- geometric (always) ---
-    p_geo = eg.match(ev, base, gp)
-    geo_links = _links(p_geo)
+    # --- geometric (always) -> sidecar carries per-link milepost + tmc attribution ---
+    sidecar = match_corridor(ev, base, gp)
+    if sidecar is not None and len(sidecar) and "mp_begin" in sidecar.columns:
+        sidecar = sidecar.sort_values("mp_begin")
+    geo_links = [str(x) for x in sidecar["link_id"].tolist()] if sidecar is not None and len(sidecar) else []
     _write_links(os.path.join(out, "geometric_route.csv"), geo_links)
 
     # --- HMM (if native engine available) ---
@@ -114,6 +188,14 @@ def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
         for k, v in ver["checks"].items():
             w.writerow([k, v])
         w.writerow(["verdict", ver["verdict"]])
+
+    # --- TMC-specific outputs + verification (crosswalk, milepost, coverage, gateways) ---
+    if ctype == "tmc":
+        tmc_checks, tmc_fails = _tmc_outputs(out, sidecar, case_dir, cfg, topo, trusted)
+        ver["checks"].update(tmc_checks)
+        if tmc_fails:
+            ver["failures"] = ver.get("failures", []) + tmc_fails
+            ver["verdict"] = "FAIL"
 
     # --- baseline self-validation (2nd run): trusted vs expected_route.csv ---
     baseline_note = None

@@ -11,3 +11,12 @@ def test_synthetic_self_demo_pass():
     assert s["verification"]["checks"]["connected_path"] is True
     assert s["verification"]["checks"]["geometric_expected_jaccard"] >= 0.90
     assert s["baseline"]["matches_baseline"] is True
+
+
+def test_tmc_self_demo_pass():
+    s = run_case("tmc", ROOT)
+    assert s["verdict"] in ("PASS", "PASS_WITH_ENGINE_DISAGREEMENT"), s
+    c = s["verification"]["checks"]
+    assert c["milepost_monotonic"] and c["sequence_preserved"]
+    assert c["tmc_coverage"] >= 0.90 and c["gateways_traversed"]
+    assert s["baseline"]["matches_baseline"] is True
