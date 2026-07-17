@@ -8,10 +8,10 @@ def cli(argv=None):
         from .selfdemo import main
         return main(argv[1:])
     if argv and argv[0] == "apply-review":
-        print("apply-review: human-in-the-loop path regeneration — Milestone 4 (stub)")
-        return 0
+        from .apply_review import main
+        return main(argv[1:])
     print("usage: mapmatching4gmns self-demo --case <name> [--all]\n"
-          "       mapmatching4gmns apply-review <case_output/> --review match_review.csv")
+          "       mapmatching4gmns apply-review <case_output/> [--review match_review.csv] [--network <dir>]")
     return 1
 
 

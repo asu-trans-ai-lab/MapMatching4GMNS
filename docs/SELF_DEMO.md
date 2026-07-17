@@ -54,9 +54,26 @@ cross-engine comparison, output schemas, and GUI export.
 `match_review.csv` records a reproducible human-in-the-loop history:
 `review_id, trace_id, issue_type, hmm_link_ids, geometric_link_ids, trusted_link_ids,
 review_status, reviewer_decision (ACCEPT_TRUSTED|ACCEPT_HMM|ACCEPT_GEOMETRIC|REPLACE_PATH|
-INSUFFICIENT_EVIDENCE), replacement_link_ids, review_note`. `mapmatching4gmns apply-review`
-regenerates a corrected result (Milestone 4). The dashboard toggles raw trace / HMM / geometric /
-trusted layers — visual review, not network editing (GUI4GMNS-aligned).
+INSUFFICIENT_EVIDENCE), replacement_link_ids, review_note`. The dashboard toggles raw trace / HMM /
+geometric / trusted layers — visual review, not network editing (GUI4GMNS-aligned).
+
+**`apply-review` (implemented).** A reviewer fills `reviewer_decision` (and `replacement_link_ids`
+for `REPLACE_PATH`); the command applies the decisions and writes the corrected result — **without
+editing the GMNS network**:
+
+```bash
+mapmatching4gmns apply-review case_output/ --network examples/self_demo/00_synthetic
+```
+
+- `ACCEPT_TRUSTED|ACCEPT_HMM|ACCEPT_GEOMETRIC` → that engine's recorded link set for the row.
+- `REPLACE_PATH` → `replacement_link_ids`, **validated** against the network (`--network`): unknown
+  link ids are `REJECTED`; a non-contiguous chain is `APPLIED` with a connectivity warning.
+- `INSUFFICIENT_EVIDENCE` → accepts no route and flags the row for more data.
+
+Outputs (into the case dir): `reviewed_route.csv` (corrected sequence: `review_id, trace_id, seq,
+link_id`), `match_review_resolved.csv` (input rows + `review_status` + `applied_link_ids` +
+`apply_note`; the input file is left untouched), and `review_applied.json` (per-row summary +
+applied/rejected/open counts). The step is idempotent and re-runnable.
 
 ## Case 2 — TMC → GMNS corridor (implemented)
 
@@ -87,8 +104,8 @@ network from that portal's `network.geojson`. Any genuinely restricted feed stay
 ## Roadmap
 
 M1 harness + synthetic + CI **(done)** → M2 TMC **(done)** → M3 I-95 trip + CV **(done)** → M4 GUI
-review contract → M5 GTFS → M6 LRS. New cases plug into the **same adapter + verification
-contract**, not one-off notebooks.
+review contract + `apply-review` **(done)** → M5 GTFS → M6 LRS. New cases plug into the **same
+adapter + verification contract**, not one-off notebooks.
 
 ## Restricted data
 

@@ -45,7 +45,12 @@ baseline. The synthetic golden case runs in CI on every push.
 ```bash
 mapmatching4gmns self-demo --case synthetic     # -> case_output/ + dashboard.html + SELF_DEMO_PASS.txt
 mapmatching4gmns self-demo --all
+mapmatching4gmns apply-review case_output/ --network network   # apply human review -> reviewed_route.csv
 ```
+
+Each case also writes a `match_review.csv` review contract; a reviewer records a decision
+(accept an engine's path, `REPLACE_PATH`, or flag `INSUFFICIENT_EVIDENCE`) and `apply-review`
+regenerates a corrected route **without editing the GMNS network**. See `docs/SELF_DEMO.md`.
 
 Ownership boundary: **evidence adapter + route matching + match verification + visual review** —
 it does not judge which network is globally "best" (that is `qaqc4gmns`). Cases: 0 synthetic
