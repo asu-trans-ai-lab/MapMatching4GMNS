@@ -76,11 +76,13 @@ Two evidence streams through the same contract (`adapters/i95.py`):
   (speed ≈ 0 or < 5 m step), then matches; a **thinning-stability** check re-matches a thinned
   trajectory and requires the link set to stay stable (graded → `REVIEW_REQUIRED` if marginal).
 
-**Public fixture** (`examples/self_demo/01_i95`) is sanitized/synthetic and runs in CI. The
-**real I-95 records (INRIX/RITIS/VDOT) are LOCAL-ONLY** — kept in a gitignored `local_data/`,
-never committed. `adapters.i95.portal_to_network` builds a GMNS network from a local GUI4GMNS
-I-95 portal (`network.geojson`) for the local research version; no restricted source record is
-copied into committed outputs.
+**Public fixture** (`examples/self_demo/01_i95`) is sanitized/synthetic and runs in CI. A richer
+**visualization portal** ships in `examples/portals/i95_va/` (deck.gl `datahub.html`, `gmns.kml`,
+kepler configs, `network.geojson`) — built by GUI4GMNS from the **synthesized** I-95 output of the
+MIT-licensed [USDOT JPO CodeHub Data Cleaning and Fusion Tool](https://github.com/usdot-jpo-codehub/data-cleaning-and-fusion-tool)
+(see `examples/portals/i95_va/ATTRIBUTION.md`). `adapters.i95.portal_to_network` builds a GMNS
+network from that portal's `network.geojson`. Any genuinely restricted feed stays in a gitignored
+`local_data/`; nothing proprietary is committed.
 
 ## Roadmap
 

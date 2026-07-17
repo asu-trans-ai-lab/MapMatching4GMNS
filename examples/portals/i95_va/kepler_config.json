@@ -1,0 +1,44 @@
+{
+ "version": "v1",
+ "config": {
+  "visState": {
+   "layers": [
+    {
+     "type": "geojson",
+     "config": {
+      "dataId": "network",
+      "label": "network (volume)",
+      "colorField": {
+       "name": "volume",
+       "type": "real"
+      },
+      "visConfig": {
+       "opacity": 0.8,
+       "thickness": 2
+      }
+     }
+    },
+    {
+     "type": "trip",
+     "config": {
+      "dataId": "trips",
+      "label": "trajectories"
+     }
+    },
+    {
+     "type": "arc",
+     "config": {
+      "dataId": "od_arcs",
+      "label": "OD",
+      "columns": {
+       "lat0": "o_lat",
+       "lng0": "o_lon",
+       "lat1": "d_lat",
+       "lng1": "d_lon"
+      }
+     }
+    }
+   ]
+  }
+ }
+}

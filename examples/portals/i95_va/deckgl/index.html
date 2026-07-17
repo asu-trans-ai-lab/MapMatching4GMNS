@@ -1,0 +1,21 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>deck.gl — gui4gmns export</title>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+<style>body{margin:0}#c{position:absolute;inset:0}</style></head><body><div id="c"></div>
+<script>
+// NOTE: this standalone deck.gl page loads deck.gl from a CDN (needs internet) — it is an EXPORT to an
+// external tool, not the self-contained gui4gmns dashboard. Add/remove layers below freely.
+fetch('data.json').then(r=>r.json()).then(D=>{
+ const {DeckGL,PathLayer,TripsLayer,ArcLayer}=deck;
+ let t=0;const T=Math.max(1,...D.trips.flatMap(x=>x.timestamps.length?[x.timestamps[x.timestamps.length-1]]:[0]));
+ const deckgl=new DeckGL({container:'c',mapStyle:null,
+  initialViewState:{longitude:-77.28081,latitude:38.65351,zoom:11,pitch:45,bearing:0},controller:true,
+  layers:[]});
+ function render(){t=(t+30)%T;deckgl.setProps({layers:[
+   new PathLayer({id:'net',data:D.paths,getPath:d=>d.path,getColor:d=>d.color,getWidth:d=>d.width,widthMinPixels:1}),
+   new ArcLayer({id:'od',data:D.arcs,getSourcePosition:d=>d.source,getTargetPosition:d=>d.target,
+     getSourceColor:[80,160,255],getTargetColor:[255,140,80],getWidth:1}),
+   new TripsLayer({id:'trips',data:D.trips,getPath:d=>d.path,getTimestamps:d=>d.timestamps,
+     getColor:[87,217,140],opacity:0.9,widthMinPixels:2,trailLength:180,currentTime:t})]});
+   requestAnimationFrame(render);}
+ render();});
+</script></body></html>

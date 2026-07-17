@@ -5,9 +5,11 @@ Two evidence streams (spec §3):
   B. connected-vehicle (CV) — denser but noisier: duplicates, stationary points, lane-level
      lateral variation, time gaps, partial coverage. Cleaned before matching.
 
-Restricted-data boundary: the real I-95 records (INRIX/RITIS/VDOT) are LOCAL-ONLY and never
-committed. `portal_to_network` reads a local GUI4GMNS I-95 portal (network.geojson) into GMNS for
-the local research version; the public CI fixture in examples/self_demo/01_i95 is sanitized.
+Data boundary: the bundled I-95 portal (examples/portals/i95_va) is the *synthesized* output of
+the MIT-licensed USDOT JPO CodeHub "Data Cleaning and Fusion Tool" (FHWA), so it ships publicly;
+`portal_to_network` reads its network.geojson into GMNS. The public CI fixture in
+examples/self_demo/01_i95 is sanitized/synthetic. Any genuinely restricted feed stays in a
+gitignored local_data/ and is never committed.
 """
 from .gps import trace_to_evidence, _hav_mi
 
