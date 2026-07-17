@@ -13,11 +13,9 @@ jobs:
         run: |
           pip install pybind11
           cd native && bash build_pybind.sh || echo "native build skipped; geometric-only"
-      - name: Run synthetic self-demo (Case 0)
+      - name: Run all self-demo cases (synthetic, i95 trip/CV, TMC)
         env:
           MAPMATCHING4GMNS_ENGINE_DIR: ${{ github.workspace }}/native
-        run: python -m mapmatching4gmns.selfdemo --all
-      - name: Assert PASS
-        run: test -f examples/self_demo/00_synthetic/case_output/SELF_DEMO_PASS.txt && test -f examples/self_demo/02_tmc/case_output/SELF_DEMO_PASS.txt
+        run: python -m mapmatching4gmns.selfdemo --all   # exits non-zero if any case fails
       - name: pytest
         run: pytest -q

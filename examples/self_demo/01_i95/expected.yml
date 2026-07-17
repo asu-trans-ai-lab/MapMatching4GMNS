@@ -1,0 +1,11 @@
+case_id: i95_trip
+case_type: i95_trip
+direction: AB
+expected_connected_path: true
+expected_direction: AB
+expected_route_links: [195N0001AB, 195N0002AB, 195N0003AB, 195N0004AB, 195N0005AB]
+required_gateways: [1, 6]
+gp_types: ['1']
+minimum_trace_coverage: 0.90
+minimum_geometric_expected_jaccard: 0.90
+minimum_cross_engine_jaccard: 0.80

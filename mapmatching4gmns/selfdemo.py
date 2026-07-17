@@ -15,7 +15,11 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CASES = {"synthetic": "examples/self_demo/00_synthetic", "tmc": "examples/self_demo/02_tmc"}
+# case_id -> (subdir under examples/self_demo, config yml name)
+CASES = {"synthetic": ("00_synthetic", "expected.yml"),
+         "i95_trip": ("01_i95", "expected.yml"),
+         "i95_cv": ("01_i95", "expected_cv.yml"),
+         "tmc": ("02_tmc", "expected.yml")}
 
 
 def _load_yml(path):
@@ -117,10 +121,11 @@ def _tmc_outputs(out, sidecar, case_dir, cfg, topo, trusted):
 def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
     import pandas as pd
     from . import adapters, engine_hmm_internal as eh, verify_match, gui_export
-    from .adapters import tmc as tmc_adapter
+    from .adapters import tmc as tmc_adapter, i95 as i95_adapter
     from .mapmatch_corridor_to_gmns import match_corridor
-    case_dir = os.path.join(repo_root, CASES[case_id])
-    cfg = _load_yml(os.path.join(case_dir, "expected.yml"))
+    subdir, yml = CASES[case_id]
+    case_dir = os.path.join(repo_root, "examples", "self_demo", subdir)
+    cfg = _load_yml(os.path.join(case_dir, yml))
     out = out_dir or os.path.join(case_dir, "case_output")
     os.makedirs(out, exist_ok=True)
 
@@ -135,6 +140,13 @@ def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
                                      cfg.get("road"), cfg.get("direction"))
         # a "trace" view for the dashboard: the ordered TMC endpoints
         trace = ev.reference_points.rename(columns={"longitude": "x_coord", "latitude": "y_coord"})
+    elif ctype == "i95_trip":
+        trace = pd.read_csv(os.path.join(case_dir, "trip.csv"))
+        ev = i95_adapter.trip_to_evidence(trace, direction=cfg.get("direction", "AB"), corridor_id=case_id)
+    elif ctype == "i95_cv":
+        raw_cv = pd.read_csv(os.path.join(case_dir, "cv.csv"))
+        trace = i95_adapter.clean_cv(raw_cv)                 # dedup + drop stationary
+        ev = i95_adapter.cv_to_evidence(raw_cv, direction=cfg.get("direction", "AB"), corridor_id=case_id)
     else:
         raise NotImplementedError(f"case_type {ctype}: use the {ctype} adapter (stub)")
     trace.to_csv(os.path.join(out, "normalized_trace.csv"), index=False)
@@ -196,6 +208,19 @@ def run_case(case_id, repo_root, out_dir=None, update_baseline=False):
         if tmc_fails:
             ver["failures"] = ver.get("failures", []) + tmc_fails
             ver["verdict"] = "FAIL"
+
+    # --- CV thinning stability (i95_cv): re-match a thinned trajectory, links should be stable ---
+    if ctype == "i95_cv" and cfg.get("require_thinning_stable"):
+        ev_t = i95_adapter.cv_to_evidence(i95_adapter.thin(raw_cv), direction=cfg.get("direction", "AB"),
+                                          corridor_id=case_id)
+        side_t = match_corridor(ev_t, base, gp)
+        links_t = [str(x) for x in side_t["link_id"].tolist()] if side_t is not None and len(side_t) else []
+        stab = verify_match._jaccard(geo_links, links_t)
+        ver["checks"]["thinning_stability"] = round(stab, 3)
+        if stab < 0.6:
+            ver["failures"] = ver.get("failures", []) + ["thinning_unstable"]; ver["verdict"] = "FAIL"
+        elif stab < 0.85 and ver["verdict"] == "PASS":
+            ver["warnings"] = ver.get("warnings", []) + ["thinning_marginal"]; ver["verdict"] = "REVIEW_REQUIRED"
 
     # --- baseline self-validation (2nd run): trusted vs expected_route.csv ---
     baseline_note = None

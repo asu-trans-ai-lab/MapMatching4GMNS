@@ -20,3 +20,15 @@ def test_tmc_self_demo_pass():
     assert c["milepost_monotonic"] and c["sequence_preserved"]
     assert c["tmc_coverage"] >= 0.90 and c["gateways_traversed"]
     assert s["baseline"]["matches_baseline"] is True
+
+
+def test_i95_trip_self_demo_pass():
+    s = run_case("i95_trip", ROOT)
+    assert s["verdict"] in ("PASS", "PASS_WITH_ENGINE_DISAGREEMENT"), s
+    assert s["verification"]["checks"]["connected_path"] is True
+
+
+def test_i95_cv_self_demo_pass():
+    s = run_case("i95_cv", ROOT)
+    assert s["verdict"] in ("PASS", "PASS_WITH_ENGINE_DISAGREEMENT", "REVIEW_REQUIRED"), s
+    assert s["verification"]["checks"]["thinning_stability"] >= 0.6

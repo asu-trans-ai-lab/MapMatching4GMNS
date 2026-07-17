@@ -13,3 +13,6 @@ case_output/
 dashboard_layers/
 SELF_DEMO_PASS.txt
 self_demo_report/
+
+# LICENSED / restricted data (INRIX/RITIS/VDOT) — never commit
+local_data/

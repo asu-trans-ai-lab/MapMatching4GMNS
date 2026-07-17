@@ -39,7 +39,7 @@ rather than a forced pass.
 | # | case | source | status |
 |---|---|---|---|
 | 0 | **synthetic golden** | GPS trace + a competing frontage + ramp | **implemented, runs in CI** |
-| 1 | I-95 trip / connected-vehicle | trip-path + CV (local, restricted data) | adapter stub (`adapters/i95.py`) |
+| 1 | **I-95 trip / connected-vehicle** | trip-path + CV | **implemented (public fixture in CI; real data local-only)** |
 | 2 | **TMC → GMNS corridor** | `TMC_Identification.csv` | **implemented, runs in CI** |
 | 3 | GTFS → road GMNS | shapes / stops | adapter stub (`adapters/gtfs.py`) |
 | 4 | LRS → GMNS | route events + measures | adapter stub (`adapters/lrs.py`) |
@@ -68,9 +68,23 @@ preservation (sᵢ₊₁ ≥ sᵢ), milepost monotonicity, gateway traversal, TM
 handling** (a single TMC may legitimately map to several planning links — the relation is
 preserved, not forced 1:1).
 
+## Case 1 — I-95 trip / connected-vehicle (implemented)
+
+Two evidence streams through the same contract (`adapters/i95.py`):
+- **trip-path** — sparse, long, clean trajectories → direct evidence.
+- **connected-vehicle (CV)** — dense/noisy: `clean_cv` drops duplicates and stationary points
+  (speed ≈ 0 or < 5 m step), then matches; a **thinning-stability** check re-matches a thinned
+  trajectory and requires the link set to stay stable (graded → `REVIEW_REQUIRED` if marginal).
+
+**Public fixture** (`examples/self_demo/01_i95`) is sanitized/synthetic and runs in CI. The
+**real I-95 records (INRIX/RITIS/VDOT) are LOCAL-ONLY** — kept in a gitignored `local_data/`,
+never committed. `adapters.i95.portal_to_network` builds a GMNS network from a local GUI4GMNS
+I-95 portal (`network.geojson`) for the local research version; no restricted source record is
+copied into committed outputs.
+
 ## Roadmap
 
-M1 self-demo harness + synthetic + CI **(done)** → M2 TMC **(done)** → M3 I-95 local (trip + CV) → M4 GUI
+M1 harness + synthetic + CI **(done)** → M2 TMC **(done)** → M3 I-95 trip + CV **(done)** → M4 GUI
 review contract → M5 GTFS → M6 LRS. New cases plug into the **same adapter + verification
 contract**, not one-off notebooks.
 
