@@ -36,6 +36,22 @@ qa = mm.match(ev, network_dir="network", engine="both")        # both + agreemen
 `engine="both"` returns a QA record: the two paths, their link Jaccard, direction / milepost /
 gateway checks, and a resolved trusted path. Run the fully-open demo in `examples/synthetic/`.
 
+## Self-testing / self-demo
+
+The package is self-testing: a repeatable case pipeline (evidence → trace → both engines →
+agreement → trusted path → verification → GUI review) that self-validates against a curated
+baseline. The synthetic golden case runs in CI on every push.
+
+```bash
+mapmatching4gmns self-demo --case synthetic     # -> case_output/ + dashboard.html + SELF_DEMO_PASS.txt
+mapmatching4gmns self-demo --all
+```
+
+Ownership boundary: **evidence adapter + route matching + match verification + visual review** —
+it does not judge which network is globally "best" (that is `qaqc4gmns`). Cases: 0 synthetic
+(done), then TMC · I-95 trip/CV · GTFS · LRS through the same adapter + verification contract.
+See `docs/SELF_DEMO.md`.
+
 ## Build the native engine (Engine 1)
 
 The most-likely-path matcher is a portable C++ pybind module in `native/` (also buildable as the

@@ -7,3 +7,9 @@ __pycache__/
 build/
 dist/
 .venv/
+
+case_output/
+**/case_output/
+dashboard_layers/
+SELF_DEMO_PASS.txt
+self_demo_report/

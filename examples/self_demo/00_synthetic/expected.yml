@@ -1,0 +1,11 @@
+case_id: synthetic
+case_type: gps
+expected_connected_path: true
+expected_direction: AB
+expected_route_links: [1001AB, 1002AB, 1003AB]
+gp_types: ['1']
+minimum_trace_coverage: 0.95
+minimum_hmm_expected_jaccard: 0.95
+minimum_geometric_expected_jaccard: 0.90
+minimum_cross_engine_jaccard: 0.85
+maximum_unmatched_points: 1

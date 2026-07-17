@@ -1,0 +1,23 @@
+name: self-demo
+on: [push, pull_request]
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install
+        run: pip install -e ".[full,dev]"
+      - name: Build native engine (Engine 1) — optional
+        run: |
+          pip install pybind11
+          cd native && bash build_pybind.sh || echo "native build skipped; geometric-only"
+      - name: Run synthetic self-demo (Case 0)
+        env:
+          MAPMATCHING4GMNS_ENGINE_DIR: ${{ github.workspace }}/native
+        run: python -m mapmatching4gmns.selfdemo --case synthetic
+      - name: Assert PASS
+        run: test -f examples/self_demo/00_synthetic/case_output/SELF_DEMO_PASS.txt
+      - name: pytest
+        run: pytest -q

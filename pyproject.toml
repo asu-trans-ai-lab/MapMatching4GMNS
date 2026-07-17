@@ -13,8 +13,12 @@ authors = [{ name = "ASU Trans-AI Lab" }]
 keywords = ["gmns", "map-matching", "trace2route", "tmc", "gps", "trajectory", "traffic"]
 dependencies = ["pandas>=1.5", "numpy>=1.20"]
 
+[project.scripts]
+mapmatching4gmns = "mapmatching4gmns.cli:cli"
+
 [project.optional-dependencies]
 dev = ["pytest", "pybind11"]
+full = ["pandas>=1.5", "numpy>=1.20", "scipy>=1.7", "networkx>=2.6"]
 
 [project.urls]
 Homepage = "https://github.com/asu-trans-ai-lab/mapmatching4gmns"
