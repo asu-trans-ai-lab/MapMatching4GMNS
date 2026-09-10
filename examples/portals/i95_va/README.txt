@@ -1,1 +1,0 @@
-Google Earth export. Open gmns.kml in Google Earth (Pro/web). Links are extruded 3D bars (height = volume) — tilt to fly. Use the time slider to animate trajectory points.

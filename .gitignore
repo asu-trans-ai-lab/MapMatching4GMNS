@@ -1,9 +1,15 @@
-
+# Python bytecode and local metadata
 __pycache__/
 *.pyc
 *.pyd
 *.so
 *.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+
+# Local build and virtual environments
 build/
 dist/
 .venv/
