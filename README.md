@@ -1,324 +1,328 @@
 # MapMatching4GMNS
 
-**Dual-engine map matching for GMNS.** Two independent matchers under one Python API — run
-either, or **both**, because two engines agreeing is a quality signal. Map matching becomes a QC
-step, not just preprocessing.
+`mapmatching4gmns` 0.3.0 provides one Python API for three GMNS map-matching engine selectors:
 
-<p align="center">
-  <img src="docs/img/matched_route_vs_trace.png" width="720" alt="A noisy GPS trace (white points) matched to a connected route (orange) on the road network"><br/>
-  <em>Input: a noisy GPS <strong>trace</strong> (white). Output: the most-likely connected <strong>route</strong> (orange) on the GMNS network.</em>
-</p>
+| Selector | Implementation | Intended use | Output |
+|---|---|---|---|
+| `native` | packaged C++ `trace2route` extension | most-likely connected paths | ordered, routable link sequence |
+| `geometric` | built-in Python centerline matcher | TMC, GTFS, LRS, and corridor conflation | matched links with local mileposts |
+| `mapmatcher4gmns` | adapter to the separate `mapmatcher4gmns` HMM package | noisy GPS and probe trajectories | expanded, connected link sequence |
 
-**New here? Jump to the [🚀 Guided tour](#guided-tour--demos) for a 3-minute run.**
+The legacy selector `hmm` is an alias for `native`; it does not select the external HMM.
+Use `engine="mapmatcher4gmns"` for the actual HMM package.
 
-> Questions / suggestions: [xzhou74@asu.edu](mailto:xzhou74@asu.edu). The original walkthrough is
-> in [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb); example data is under `datasets/`.
-> The full **two-engine user guide** (network / evidence / file schemas / algorithms) is below.
+`engine="both"` retains the established two-engine QA workflow: it runs `native` and
+`geometric`, compares them, and resolves a trusted result. It does not currently run all three
+engines.
 
-| | Engine 1 — native (`trace2route`) | Engine 2 — geometric |
-|---|---|---|
-| method | most-likely **connected path** (time-geographic; Tang et al. 2015) | centerline **projection** onto links |
-| speed | ~0.3 s/corridor (loads network) | ~0.02 s (≈12× faster) |
-| output | routable link sequence (assignment / OD) | link set + per-link **milepost** |
-| build | C++ pybind module (`native/`) | pure Python |
-| keyword | `engine="native"` *(legacy alias: `"hmm"`)* | `engine="geometric"` |
-
-Median cross-engine link agreement on freeway corridors: **Jaccard ≈ 0.86** — trust the match
-where they agree, flag it where they disagree.
-
-> **Naming, so nobody trips on it.** Engine 1 (`trace2route`) is a *most-likely-path* matcher, **not
-> a Hidden Markov Model** — the `hmm` keyword and the `hmm_*` output columns are legacy labels for
-> Engine 1. The actual **HMM** package is [`mapmatcher4gmns`](https://github.com/yajunliu99/mapmatcher4gmns)
-> by **Yajun Liu** — a *separate* project (one letter apart: **matcher** vs **matching**) that this
-> package can optionally drive as a third engine. See [Attribution & ecosystem](#attribution--ecosystem).
-
-## How it works
-
-Every source becomes one **standard evidence**, both engines match it, and their **agreement**
-drives a graded verdict and an optional human review — the same path for GPS, connected-vehicle,
-TMC, GTFS, or LRS:
-
-```mermaid
-flowchart LR
-    A["Evidence<br/>GPS · CV · TMC · GTFS · LRS"] --> B["Standard trace"]
-    B --> C1["Engine 1 · trace2route<br/>connected path"]
-    B --> C2["Engine 2 · geometric<br/>link set + milepost"]
-    C1 --> D{"Agreement<br/>(Jaccard)"}
-    C2 --> D
-    D --> E["Trusted path"]
-    E --> F["Verification<br/>graded verdict"]
-    F --> G["GUI review<br/>dashboard.html"]
-    G --> H["apply-review<br/>reviewed_route.csv"]
-    NET[("GMNS network")] --> C1
-    NET --> C2
-    style C1 fill:#fff7ed,stroke:#c2843b
-    style C2 fill:#fff7ed,stroke:#c2843b
-    style D fill:#eef2ff,stroke:#4338ca
-    style E fill:#e6fffa,stroke:#2c7a7b
-```
-
-## Install & quickstart
+## Installation
 
 ```bash
-pip install -e .            # pandas + numpy  (add the native engine below for Engine 1)
+python -m pip install mapmatching4gmns
 ```
+
+One installation command provides all three selectors. The platform wheel contains the native
+extension and geometric engine; pip installs `mapmatcher4gmns>=0.2.1,<0.3` and its Python
+dependencies for the third selector.
+
+Version 0.3.0 targets CPython 3.9 through 3.14 on:
+
+- Linux x86_64
+- Windows AMD64
+- macOS x86_64
+- macOS arm64
+
+Installing from an sdist instead of a wheel requires CMake and a C++14 compiler.
+
+Verify the installed engine entry points:
 
 ```python
 import mapmatching4gmns as mm
 
-ev = mm.corridor_from_tmc("TMC_Identification.csv", road="I-95", direction="NORTHBOUND")
-p1 = mm.match(ev, network_dir="network", engine="native")     # Engine 1: connected path (alias "hmm")
-p2 = mm.match(ev, network_dir="network", engine="geometric")  # Engine 2: link set + milepost
-qa = mm.match(ev, network_dir="network", engine="both")        # both + agreement + verdict
+print(mm.__version__)
+print(mm.engines_available())
 ```
 
-`engine="both"` returns a QA record: the two paths, their link Jaccard, direction / milepost /
-gateway checks, and a resolved trusted path. Run the fully-open demo in `examples/synthetic/`.
+## Quick start
 
-## Self-testing / self-demo
+### TMC or corridor evidence
 
-The package is self-testing: a repeatable case pipeline (evidence → trace → both engines →
-agreement → trusted path → verification → GUI review) that self-validates against a curated
-baseline. The synthetic golden case runs in CI on every push.
+```python
+import mapmatching4gmns as mm
 
-```bash
-mapmatching4gmns self-demo --case synthetic     # -> case_output/ + dashboard.html + SELF_DEMO_PASS.txt
-mapmatching4gmns self-demo --all
-mapmatching4gmns apply-review case_output/ --network network   # apply human review -> reviewed_route.csv
+evidence = mm.corridor_from_tmc(
+    "TMC_Identification.csv",
+    road="I-95",
+    direction="NORTHBOUND",
+)
+
+native_path = mm.match(
+    evidence,
+    network_dir="network",
+    engine="native",
+)
+
+geometric_path = mm.match(
+    evidence,
+    network_dir="network",
+    engine="geometric",
+)
+
+qa = mm.match(
+    evidence,
+    network_dir="network",
+    engine="both",
+)
 ```
 
-Each case also writes a `match_review.csv` review contract; a reviewer records a decision
-(accept an engine's path, `REPLACE_PATH`, or flag `INSUFFICIENT_EVIDENCE`) and `apply-review`
-regenerates a corrected route **without editing the GMNS network**. See `docs/SELF_DEMO.md`.
+The single-engine calls return `MatchedPath`. The `both` call returns a QA dictionary containing
+the two paths, agreement metrics, flags, and the selected trusted path.
 
-Ownership boundary: **evidence adapter + route matching + match verification + visual review** —
-it does not judge which network is globally "best" (that is `qaqc4gmns`). Six cases all run in CI
-through the **same adapter + verification contract** — synthetic GPS · I-95 trip/CV · TMC · GTFS ·
-LRS — each with a self-contained synthetic fixture. See `docs/SELF_DEMO.md`.
+### GPS evidence with the third engine
 
-## Guided tour & demos
+```python
+import pandas as pd
+import mapmatching4gmns as mm
+from mapmatching4gmns.adapters.gps import trace_to_evidence
 
-**3-minute run — no data, no native build (Engine 2 works out of the box):**
+gps = pd.read_csv("gps.csv")
+evidence = trace_to_evidence(gps, corridor_id="trip-001")
 
-```bash
-pip install -e .
-mapmatching4gmns self-demo --all        # runs all 6 cases; writes case_output/ + dashboard.html
+hmm_path = mm.match(
+    evidence,
+    network_dir="network",
+    engine="mapmatcher4gmns",
+    mapmatcher_options={"search_radius": 25.0},
+)
 ```
 
-Open any `examples/self_demo/<case>/case_output/dashboard.html` — a self-contained page (no
-internet) with toggleable **raw trace / Engine 1 (native) / geometric / trusted** layers and the graded verdict.
+`trace_to_evidence` accepts `x_coord`/`y_coord` or `longitude`/`latitude`. It preserves optional
+observation fields. The third-engine adapter automatically recognizes these common names:
 
-The six demo cases are a ladder — each new source type is just a new adapter behind the **same
-verification contract**, not a one-off script:
-
-```mermaid
-flowchart TD
-    subgraph LADDER["examples/self_demo/ · one adapter + verification contract"]
-      direction LR
-      c0["0 · synthetic<br/>GPS + ramp"] --> c1["1 · I-95<br/>trip + CV"] --> c2["2 · TMC<br/>corridor"] --> c3["3 · GTFS<br/>bus route"] --> c4["4 · LRS<br/>route + events"]
-    end
-    LADDER --> V["Graded verdict<br/>PASS · REVIEW_REQUIRED · FAIL"]
-    style LADDER fill:#f8fafc,stroke:#94a3b8
-    style V fill:#e6fffa,stroke:#2c7a7b
-```
-
-**Human-in-the-loop review** (`apply-review`) turns a reviewer's decision into a corrected route —
-without editing the GMNS network:
-
-```mermaid
-flowchart LR
-    R["match_review.csv<br/>(OPEN)"] --> DEC{"reviewer_decision"}
-    DEC -->|"ACCEPT_TRUSTED / HMM / GEOMETRIC"| OK["accept that engine's path"]
-    DEC -->|"REPLACE_PATH"| CHK["validate links vs network"]
-    DEC -->|"INSUFFICIENT_EVIDENCE"| FLAG["flag for more data"]
-    OK --> OUT["reviewed_route.csv"]
-    CHK --> OUT
-    style OUT fill:#e6fffa,stroke:#2c7a7b
-```
-
-### Where to look
-
-| Try this | Path / command |
+| Meaning | Recognized fields |
 |---|---|
-| Fully-open corridor + TMC demo | [`examples/synthetic/`](examples/synthetic/) |
-| Run the whole ladder | `mapmatching4gmns self-demo --all` |
-| One case + dashboard | `mapmatching4gmns self-demo --case gtfs` → `examples/self_demo/03_gtfs/case_output/dashboard.html` |
-| Apply a review | `mapmatching4gmns apply-review case_output/ --network network` |
-| Interactive visualization portal | open [`examples/portals/i95_va/datahub.html`](examples/portals/i95_va/) (deck.gl) or `gmns.kml` in Google Earth |
-| Classic single-engine walkthrough | [`MapMatching4GMNS.ipynb`](MapMatching4GMNS.ipynb) |
-| The QA method / datasets / ecosystem | [`docs/SELF_DEMO.md`](docs/SELF_DEMO.md) · [`docs/DUAL_ENGINE.md`](docs/DUAL_ENGINE.md) · [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) |
+| trajectory time | `local_time`, `timestamp`, `time`, `capture_time` |
+| heading | `heading_deg_north`, `heading` |
+| speed | `speed_mph`, `speed` |
 
-<table>
-<tr>
-<td width="50%" align="center">
-  <img src="docs/img/gmns_network_trace_qgis.png" alt="GMNS network (nodes/links) and GPS trace points over a freeway interchange in QGIS"><br/>
-  <em>GMNS network + GPS trace in QGIS — the matcher's inputs.</em>
-</td>
-<td width="50%" align="center">
-  <img src="docs/img/i95_portal_preview.png" alt="I-95 links colored by observed speed in the deck.gl portal"><br/>
-  <em>The bundled I-95 portal (<code>examples/portals/i95_va/</code>) — links by observed speed.</em>
-</td>
-</tr>
-</table>
+Explicit third-engine selection is strict. Missing dependencies, unsupported versions, invalid
+inputs, an empty result, unknown link IDs, or a disconnected expanded route raise an error instead
+of silently falling back to `geometric`.
 
-## Build the native engine (Engine 1)
+## Input requirements
 
-The most-likely-path matcher is a portable C++ pybind module in `native/` (also buildable as the
-classic Visual Studio project via `native/trace2route.sln` / `CMakeLists.txt`):
+All engines use a GMNS network directory containing `node.csv` and `link.csv`.
 
-```bash
-cd native
-bash build_pybind.sh              # -> mapmatching4gmns_engine.<ext>
-MM_OPENMP=1 bash build_pybind.sh  # optional: parallel batch matching
-```
+### `node.csv`
 
-Then `export MAPMATCHING4GMNS_ENGINE_DIR=/path/to/native`. Without it, Engine 1 falls back to a
-`trace2route.exe` if present; Engine 2 always works. See `native/PORTABILITY_NOTES.md`.
+Required shared fields:
 
-**This release hardens `trace2route`**: portable build (MFC-free), in-process pybind module,
-memory-leak fix (TD-array deallocation), `link_id` preserved as a string (`AB`/`BA` direction
-suffix), and opt-in OpenMP for parallel batch matching.
+- `node_id`
+- `x_coord`
+- `y_coord`
 
-## What's in the box
+### `link.csv`
 
-- `mapmatching4gmns/` — Python package (both engines + `compare`/`dual_match` QA + schema)
-- `native/` — the C++ `trace2route` engine (portable pybind + VS project + CMake)
-- `docs/` — `DUAL_ENGINE.md` (the QA method), `ECOSYSTEM.md`
-- `examples/synthetic/` — a fully-open corridor + TMC demo
-- `datasets/`, `MapMatching4GMNS.ipynb`, `media/`, `release/` — original data & walkthrough
+Core fields used across the engines:
 
-Extras: `trace_segmenter` (recover **loop** routes that collapse as one o→d), `mm_metrics`
-(coverage ratio — unit-robust; raw link count is not comparable across networks), `gtfs2trace`.
+- `link_id`
+- `from_node_id`
+- `to_node_id`
+- `geometry` as WKT `LINESTRING`
 
-## Attribution & ecosystem
+Additional requirements differ by engine:
 
-**This package — `mapmatching4gmns`** (Engine 1 `trace2route` + Engine 2 geometric, with
-agreement-based QA) is by **Xuesong (Simon) Zhou**. `trace2route` (Engine 1) is a most-likely-path
-matcher (time-geographic; Tang et al. 2015).
+| Engine | Additional fields |
+|---|---|
+| native | `length` and `free_speed` are used when available; internal defaults are retained for older fixtures |
+| geometric | `link_type`, used with `gp_types` to select matchable facilities |
+| mapmatcher4gmns | `lanes`; accepts the other standard GMNS link attributes |
 
-**A separate package — `mapmatcher4gmns`** (note: *matcher*, not *matching*) by **Yajun Liu**
-([github.com/yajunliu99/mapmatcher4gmns](https://github.com/yajunliu99/mapmatcher4gmns),
-[PyPI](https://pypi.org/project/mapmatcher4gmns/)) is a **Hidden Markov Model** matcher, inspired by
-and referencing [TrackIt / GoTrackIt](https://github.com/zdsjjtTLG/TrackIt) (TangKai et al.,
-Hangzhou Zecheng Data Technology). It is a distinct project — not an engine of this one.
+Coordinates must be longitude/latitude for the packaged workflows and fixtures.
+String link IDs, including direction suffixes and meaningful leading zeros, are preserved.
 
-| | `mapmatching4gmns` (this) | `mapmatcher4gmns` (Yajun Liu) |
-|---|---|---|
-| what | dual-engine matcher + agreement QA | single HMM matcher |
-| engines | Engine 1 native `trace2route` (most-likely path) · Engine 2 geometric | HMM (TrackIt/GoTrackIt lineage) |
-| relation | can optionally call the other as a **third** engine | standalone |
-
-**Optional third engine.** `mapmatcher4gmns_adapter` is a seam to run Yajun Liu's HMM matcher as a
-third engine. That HMM path is **currently gated** (the wrapper raises `NotImplementedError`)
-pending upstream fixes tracked in the adapter — Engine 2 (geometric) is the always-available
-default and Engine 1 (native) the primary alternative. Don't confuse the two package names: they
-differ by one word (**matcher** vs **matching**) and cover different algorithms.
-
-Part of the [ASU Trans-AI Lab](https://github.com/asu-trans-ai-lab) GMNS toolchain; used by
-**Subarea2GMNS** to seed subarea OD (`docs/ECOSYSTEM.md`). MIT licensed.
-
----
-
-# User guide (two engines)
-
-## 1. Introduction
-
-Given a GMNS network and location evidence (a GPS trace, a TMC corridor, a GTFS shape, an LRS
-route, …), MapMatching4GMNS finds the route each trajectory most likely took, using **two
-independent engines**:
-
-- **Engine 1 — `trace2route` (native).** The most-likely **connected path** (node sequence) in the
-  network — a routable path suitable for assignment / OD. This is the classic engine described in
-  the sections below; run it via the in-process pybind module (`native/`) or the legacy
-  `trace2route.exe`.
-- **Engine 2 — geometric.** Centerline **projection** of the evidence onto links — a link set with
-  a per-link **milepost**. Pure Python, ~12× faster, always available.
-
-Run either, or **both**: where the two agree (link Jaccard), trust the match; where they disagree,
-flag it. That agreement check is the QA the single-engine tool could not give you. GMNS: General
-Modeling Network Specification (<https://github.com/zephyr-data-specs/GMNS>).
+## Public API
 
 ```python
-import mapmatching4gmns as mm
-p1 = mm.match(ev, network_dir="network", engine="native")     # Engine 1: connected path (alias "hmm")
-p2 = mm.match(ev, network_dir="network", engine="geometric")  # Engine 2: link set + milepost
-qa = mm.match(ev, network_dir="network", engine="both")        # both + agreement + verdict
+mm.match(
+    evidence,
+    network_dir=None,
+    base_link_df=None,
+    gp_types=("1", "2", "3"),
+    engine="both",
+    mapmatcher_options=None,
+)
 ```
 
-## 2. Data flow
+Supported selectors:
 
-Both engines read the **same** GMNS network and the same evidence, and each writes its own matched
-result; `engine="both"` adds the agreement/verdict record:
+- `native`: packaged `trace2route` connected-path engine
+- `hmm`: legacy alias for `native`
+- `geometric`: built-in centerline projection engine
+- `mapmatcher4gmns`: external HMM through the strict adapter
+- `both`: native+geometric comparison and resolution
 
-| stage | files | data source | produced by | visualization |
-|---|---|---|---|---|
-| GMNS network input | `node.csv`, `link.csv` | [osm2gmns](https://osm2gmns.readthedocs.io/) and other X2GMNS converters | — | [QGIS](https://www.qgis.org/), [GMNS web viewer](https://asu-trans-ai-lab.github.io/index.html#/), `dashboard.html` |
-| evidence input | `trace.csv` (GPS/CV) · `TMC_Identification.csv` · GTFS `shapes.txt` · LRS `route.csv` | GPS traces (e.g. [`release/get_gps_trace.py`](release/get_gps_trace.py)); INRIX/RITIS TMC; open GTFS feeds; DOT LRS | evidence **adapters** (`mapmatching4gmns/adapters/`) | QGIS |
-| Engine 1 output | `route.csv` (connected path) | — | `trace2route` (native / `.exe`) | QGIS, `dashboard.html` |
-| Engine 2 output | link set + per-link milepost | — | geometric matcher (Python) | QGIS, `dashboard.html` |
-| QA / agreement | `engine_comparison.csv`, `match_verification.csv`, `match_review.csv` | — | `engine="both"` + verification | `dashboard.html` |
+`network_dir` is required by `native`, `mapmatcher4gmns`, and normal `both` use. For
+`geometric`, callers may supply either `network_dir` or a preloaded `base_link_df`.
 
-**Native Engine 1**: build the pybind module (`native/build_pybind.sh`) or use the legacy
-`trace2route.exe` from [`release/`](release/). **Engine 2** needs no build.
+Every single-engine result uses the common `MatchedPath` schema, including:
 
-## 3. File description
+- trajectory and engine identifiers
+- ordered matched and candidate link sequences
+- start/end nodes when available
+- geometric, transition, direction, and confidence fields when the engine can provide them
+- engine-specific provenance in `meta`
 
-**`node.csv`** — essential node information in GMNS format: `node_id`, `x_coord`, `y_coord`.
+Not every engine estimates every field. Missing metrics remain `None`; the package does not invent
+mileposts or confidence values for the HMM route.
 
-**`link.csv`** — essential link information of the underlying (subarea) network: `from_node_id`,
-`to_node_id`, `link_type`, `length`/`geometry`. Both engines use `geometry` (WKT); `link_type`
-selects the matchable facility class (e.g. freeway vs. frontage vs. local). Engine 2 preserves the
-`link_id` string (the `AB`/`BA` direction suffix is kept).
+## Packaged validation data
 
-**Evidence / trace input** — the agent ID (a string) is the trajectory ID; `x_coord`/`y_coord` must
-be in the same CRS as the network. **Engine 1** additionally uses `o_node_id`/`d_node_id` to fix the
-start/end of the most-likely-path search, and `hh`,`mm`,`ss` for GPS timestamps (separate columns
-avoid time-format confusion). For TMC corridors, bus shapes, or LRS routes, timestamps are not
-needed but the origin (first coordinate) must be specified. In the two-engine API you normally do
-**not** write this file by hand: an **adapter** turns each source into one standard evidence that
-both engines consume identically (see `adapters/` and `docs/SELF_DEMO.md`).
+The canonical fixtures live under `datasets/` in the source repository and are copied into each
+wheel under `mapmatching4gmns/data/`.
 
-**Outputs** — Engine 1 `route.csv` (the most-likely connected path per agent, with free-flow link
-travel time/delay); Engine 2 the matched link set + milepost; and, for `engine="both"`, the
-cross-engine agreement and a graded verdict.
+```text
+datasets/
+├── gtfs/
+├── i95/
+├── lrs/
+└── tmc/
+```
 
-## 4. Visualization
+| Dataset | Purpose |
+|---|---|
+| `i95` | canonical GPS integration: 467 observations, 5 journeys, 113 nodes, 132 links |
+| `tmc` | TMC-to-GMNS conflation, milepost, coverage, and gateway checks |
+| `gtfs` | GTFS shape evidence regression |
+| `lrs` | LRS route and event projection regression |
 
-- **In QGIS** — load `node.csv`/`link.csv`, the input trace, and each engine's route
-  (Layer → Add → Add Delimited Text Layer; point geometry for nodes, WKT for links) over an
-  OpenStreetMap XYZ-tiles background. See `media/` for step screenshots.
-- **Self-contained** — every self-demo case writes a `dashboard.html` with toggleable
-  raw-trace / Engine 1 / Engine 2 / trusted layers and the verdict (no internet needed).
-- **Interactive portal** — `examples/portals/i95_va/` (deck.gl / Google Earth / kepler).
+The I-95 folder contains only reusable inputs copied from the sibling `mapmatcher4gmns` example,
+plus a fresh 0.2.1 software regression baseline. Generated matcher outputs are not copied from the
+sibling repository. See the
+[`SOURCE.md` provenance record](https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/v0.3.0/datasets/i95/SOURCE.md)
+for file hashes and the evidence boundary. The upstream collector and dataset license for these
+GPS observations are not documented, so they must not be attributed to a specific agency.
 
-## 5. Algorithms
+These datasets verify packaging, conversion, route mechanics, connectivity, and regression
+stability. They are not independently surveyed accuracy ground truth. In particular, successful
+execution or cross-engine agreement must not be reported as an external accuracy measurement.
 
-**Engine 1 — `trace2route` (most-likely connected path):**
+## Self-demo and review workflow
 
-1. Read the GMNS network (node/link) and the evidence `trace.csv`.
-2. Convert `trace.csv` to `input_agent.csv` for NeXTA visualization.
-3. Build a 2D grid to speed up indexing of trajectory points to the network.
-4. Identify the traversed subarea per trace, so only a small subset of the network enters the
-   shortest-path step.
-5. Identify origin/destination nodes in the grid per trace (boundary O/D if the trace starts/ends
-   outside a node).
-6. Estimate link cost = distance from nearby trajectory points to each link in the cell.
-7. Least generalized-cost path from the trace start to end (the connected route).
-8. Match timestamps of each node along the likely path.
-9. Output `route.csv` with estimated link travel time and delay (free-flow based).
+The CLI provides one canonical I-95 GPS batch case and three native+geometric evidence cases:
 
-**Engine 2 — geometric (projection):** for each evidence segment, project onto nearby links of the
-allowed facility class, order the matched links by projected milepost, and emit the link set with
-per-link mileposts. No path search — fast, and independent of Engine 1 by construction.
+- `i95`
+- `tmc`
+- `gtfs`
+- `lrs`
 
-**Agreement / QA:** compare the two link sets by Jaccard, check direction / milepost monotonicity /
-gateway traversal, resolve a **trusted** path (a connected Engine-1 path when available, else
-Engine 2), and grade the result (`PASS` · `PASS_WITH_ENGINE_DISAGREEMENT` · `REVIEW_REQUIRED` ·
-`FAIL`). See `docs/DUAL_ENGINE.md`.
+Run one case or all cases:
+
+```bash
+mapmatching4gmns self-demo --case tmc
+mapmatching4gmns self-demo --all
+```
+
+Outputs are written under `self_demo_report/<case>/` by default. Depending on the case, they
+include:
+
+- `normalized_trace.csv`
+- `mapmatcher_routes.csv` and `journey_verification.csv` for I-95
+- `hmm_route.csv` (`hmm` is the legacy native-engine label)
+- `geometric_route.csv`
+- `trusted_route.csv`
+- `engine_comparison.csv`
+- `match_verification.csv`
+- `case_summary.json`
+- `dashboard.html`
+- `match_review.csv`
+- source-specific TMC or LRS crosswalk files
+
+The TMC, GTFS, and LRS cases generate a local, self-contained dashboard and review contract. The
+I-95 batch case writes one verified route per journey and does not collapse the five journeys into
+one dashboard/review row. This repository no longer stores the old screenshots, notebook, or
+historical visualization portal referenced by earlier README versions.
+
+To apply a human review without editing the GMNS network:
+
+```bash
+mapmatching4gmns apply-review \
+    self_demo_report/tmc \
+    --network datasets/tmc
+```
+
+The reviewer fills `reviewer_decision` in `match_review.csv`. Supported decisions are
+`ACCEPT_TRUSTED`, `ACCEPT_HMM`, `ACCEPT_GEOMETRIC`, `REPLACE_PATH`, and
+`INSUFFICIENT_EVIDENCE`. The command writes `reviewed_route.csv`,
+`match_review_resolved.csv`, and `review_applied.json`.
+
+The I-95 self-demo and `tests/test_third_engine.py` require all five GPS journeys to match the
+stored software regression routes. A separate integration assertion runs one selected journey
+through all three engine entry points.
+
+## Development and testing
+
+```bash
+git clone https://github.com/asu-trans-ai-lab/MapMatching4GMNS.git
+cd MapMatching4GMNS
+
+python -m pip install -e ".[dev]"
+python -m pytest tests -q
+```
+
+The source layout is:
+
+```text
+mapmatching4gmns/
+├── src/mapmatching4gmns/
+│   └── _native_src/
+├── datasets/
+├── tests/
+├── dist/                 # local build output; ignored by Git
+├── pyproject.toml
+├── README.md
+├── LICENSE
+├── .gitattributes
+└── .gitignore
+```
+
+Build local release artifacts:
+
+```bash
+python -m pip install -e ".[release]"
+python -m build --sdist --wheel
+python -m twine check --strict dist/*
+```
+
+The native source is built with scikit-build-core, CMake, and pybind11. It is compiled into
+`mapmatching4gmns._native`; no external executable is required. See the
+[`PORTABILITY_NOTES.md`](https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/v0.3.0/src/mapmatching4gmns/_native_src/PORTABILITY_NOTES.md)
+build notes.
+
+GitHub Actions uses cibuildwheel in separate source-test, wheel-build, and trusted-PyPI-release
+workflows. The release matrix expects 24 wheels: six CPython versions across four
+OS/architecture targets, plus one sdist. `dist/` is local output and is not committed.
+
+## Package relationship and attribution
+
+The similarly named projects remain distinct:
+
+| Package | Repository | Role here |
+|---|---|---|
+| `mapmatching4gmns` | <https://github.com/asu-trans-ai-lab/MapMatching4GMNS> | this multi-engine package, native code, geometric matcher, QA, adapters, and review workflow |
+| `mapmatcher4gmns` | <https://github.com/yajunliu99/mapmatcher4gmns> | separately maintained HMM package used by the third-engine adapter |
+
+The package authors are Xuesong (Simon) Zhou, Kai (Frank) Zhang, Jiawei Lu, and Yajun Liu.
+For questions about the package, contact [xzhou74@asu.edu](mailto:xzhou74@asu.edu).
+
+The package is distributed under the
+[MIT License](https://github.com/asu-trans-ai-lab/MapMatching4GMNS/blob/v0.3.0/LICENSE).
 
 ## Reference
 
-Engine 1 is implemented partially based on: Tang J, Song Y, Miller HJ, Zhou X (2015), "Estimating
-the most likely space–time paths, dwell times and path uncertainties from vehicle trajectory data:
-A time geographic method," *Transportation Research Part C*,
-<http://dx.doi.org/10.1016/j.trc.2015.08.014>
+The native most-likely-path implementation is partially based on:
+
+Tang, J., Song, Y., Miller, H. J., and Zhou, X. (2015). “Estimating the most likely space-time
+paths, dwell times and path uncertainties from vehicle trajectory data: A time geographic
+method.” *Transportation Research Part C*, 66, 16–35.
+<https://doi.org/10.1016/j.trc.2015.08.014>

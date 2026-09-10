@@ -1,27 +1,73 @@
 [build-system]
-requires = ["setuptools>=64"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=1.0,<2", "pybind11>=2.13"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "mapmatching4gmns"
-version = "0.2.0"
-description = "Dual-engine map matching for GMNS: trace2route (native most-likely path) + geometric, with agreement-based QA."
+version = "0.3.0"
+description = "Multi-engine map matching for GMNS: native connected-path, geometric, and HMM engines."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
-authors = [{ name = "ASU Trans-AI Lab" }]
+authors = [
+    { name = "Xuesong (Simon) Zhou", email = "xzhou74@asu.edu" },
+    { name = "Kai (Frank) Zhang", email = "xiaomo123zk@gmail.com" },
+    { name = "Jiawei Lu", email = "jiaweil9@asu.edu" },
+    { name = "Yajun Liu", email = "yajunliu@asu.edu" },
+]
+maintainers = [
+    { name = "Yajun Liu", email = "yajunliu@asu.edu" },
+    { name = "Xuesong (Simon) Zhou", email = "xzhou74@asu.edu" },
+]
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["gmns", "map-matching", "trace2route", "tmc", "gps", "trajectory", "traffic"]
-dependencies = ["pandas>=1.5", "numpy>=1.20"]
+dependencies = [
+    "pandas>=1.5",
+    "numpy>=1.20",
+    "mapmatcher4gmns>=0.2.1,<0.3",
+    # mapmatcher4gmns 0.2.1 imports joblib but does not declare it itself.
+    "joblib>=1.3",
+]
 
 [project.scripts]
 mapmatching4gmns = "mapmatching4gmns.cli:cli"
 
 [project.optional-dependencies]
-dev = ["pytest", "pybind11"]
+dev = ["pytest>=8"]
 full = ["pandas>=1.5", "numpy>=1.20", "scipy>=1.7", "networkx>=2.6"]
+release = ["build>=1.2", "twine>=5", "cibuildwheel>=4.2,<5"]
 
 [project.urls]
-Homepage = "https://github.com/asu-trans-ai-lab/mapmatching4gmns"
+GitHub = "https://github.com/asu-trans-ai-lab/mapmatching4gmns"
 
-[tool.setuptools.packages.find]
-include = ["mapmatching4gmns*"]
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+cmake.source-dir = "src/mapmatching4gmns/_native_src"
+wheel.packages = ["src/mapmatching4gmns"]
+wheel.exclude = ["**/_native_src/**", "**/.DS_Store", "**/__pycache__/**", "**/*.pyc"]
+sdist.exclude = [
+    ".github/**",
+    "**/.DS_Store",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "dist/**",
+]
+
+[tool.scikit-build.wheel.force-include]
+"datasets" = "mapmatching4gmns/data"
+
+[tool.cibuildwheel]
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
+skip = ["*-win32", "*-manylinux_i686", "*-musllinux_*", "pp*", "cp3??t-*"]
+test-requires = ["pytest>=8"]
+test-command = 'python -m pytest "{project}/tests" -q'
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
+
+[tool.cibuildwheel.macos]
+archs = ["auto"]
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }

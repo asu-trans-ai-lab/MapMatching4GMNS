@@ -1,0 +1,6 @@
+case_id: i95
+case_type: i95_gps_batch
+trace_file: gps.csv
+expected_routes_file: expected_routes.csv
+expected_journeys: 5
+expected_points: 467
