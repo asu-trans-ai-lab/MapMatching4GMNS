@@ -1,2 +1,0 @@
-agent_id,o_node_id,d_node_id,o_zone_id,d_zone_id,o_cell_id,d_cell_id,volume,departure_time,travel_time,distance,node_sequence,first_from_node_id,first_to_node_id,first_link_lanes,first_link_free_speed,first_link_V/C,first_link_TTI,geometry
-JUPI0014,45,398,123,123,-2238999332,-2238999332,0.000000,0.000000,0.000000,0.000000,45;398;,45,398,1,29.000000,0.000000,-1.000000,"LINESTRING (-111.918777 33.416682,-111.917800 33.416672,)"

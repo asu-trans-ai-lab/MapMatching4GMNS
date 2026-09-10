@@ -1,0 +1,31 @@
+name: source-test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install source package
+        run: python -m pip install -e ".[full,dev]"
+      - name: Verify all engine entry points
+        run: >-
+          python -c "import mapmatching4gmns as mm;
+          available = mm.engines_available();
+          assert available['native'] and available['geometric'] and
+          available['mapmatcher4gmns'], available"
+      - name: Run tests
+        run: python -m pytest tests -q
